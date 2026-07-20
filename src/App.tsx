@@ -26,6 +26,33 @@ export default function App() {
   // Mobile responsive state
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1280);
 
+  const [teacherProfile, setTeacherProfile] = useState({
+    fullName: 'Paijo, S.Pd.',
+    school: 'SMA Negeri 1 Nusantara',
+    initial: 'P'
+  });
+
+  useEffect(() => {
+    const loadProfile = () => {
+      const saved = localStorage.getItem('histolab_teacher_profile');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setTeacherProfile({
+            fullName: parsed.fullName || 'Paijo, S.Pd.',
+            school: parsed.school || 'SMA Negeri 1 Nusantara',
+            initial: parsed.fullName ? parsed.fullName.charAt(0).toUpperCase() : 'P'
+          });
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+    loadProfile();
+    window.addEventListener('histolab_profile_updated', loadProfile);
+    return () => window.removeEventListener('histolab_profile_updated', loadProfile);
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1280) {
@@ -541,11 +568,11 @@ export default function App() {
                  
                  <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveView('pengaturan')}>
                     <div className="text-right hidden md:block">
-                       <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Paijo, S.Pd.</p>
-                       <p className="text-[10px] text-slate-500">SMA N 1 Nusantara</p>
+                       <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{teacherProfile.fullName}</p>
+                       <p className="text-[10px] text-slate-500">{teacherProfile.school}</p>
                     </div>
                     <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg shadow-sm border-2 border-white ring-2 ring-transparent group-hover:ring-indigo-200 transition-all">
-                       P
+                       {teacherProfile.initial}
                     </div>
                  </div>
               </div>

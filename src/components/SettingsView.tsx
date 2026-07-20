@@ -4,11 +4,55 @@ import { motion } from 'motion/react';
 
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'data' | 'about'>('profile');
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const handleSave = () => {
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const [profile, setProfile] = useState(() => {
+    const saved = localStorage.getItem('histolab_teacher_profile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      fullName: 'Paijo, S.Pd.',
+      nickname: 'Pak Paijo',
+      nip: '19800101 200501 1 001',
+      subject: 'Sejarah',
+      school: 'SMA Negeri 1 Nusantara',
+      email: 'paijo@sekolah.id',
+      phone: '08123456789'
+    };
+  });
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveStatus('idle');
+
+    try {
+      // Simulate API call and saving to database
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      localStorage.setItem('histolab_teacher_profile', JSON.stringify(profile));
+      setSaveStatus('success');
+      
+      // Also dispatch a custom event so App.tsx can update its header if needed
+      window.dispatchEvent(new Event('histolab_profile_updated'));
+
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (error) {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -63,7 +107,7 @@ export default function SettingsView() {
             <div className="flex flex-col md:flex-row gap-8 mb-8">
               <div className="flex flex-col items-center gap-3 shrink-0">
                 <div className="w-24 h-24 rounded-full bg-indigo-100 border-4 border-white shadow-md flex items-center justify-center text-indigo-600 font-bold text-3xl overflow-hidden relative group cursor-pointer">
-                  <span>P</span>
+                  <span>{profile.fullName ? profile.fullName.charAt(0).toUpperCase() : 'P'}</span>
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-white text-xs">Ubah Foto</span>
                   </div>
@@ -73,31 +117,31 @@ export default function SettingsView() {
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">Nama Lengkap</label>
-                  <input type="text" defaultValue="Paijo, S.Pd." className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="text" name="fullName" value={profile.fullName} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">Nama Panggilan</label>
-                  <input type="text" defaultValue="Pak Paijo" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="text" name="nickname" value={profile.nickname} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">NIP</label>
-                  <input type="text" defaultValue="19800101 200501 1 001" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="text" name="nip" value={profile.nip} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">Mata Pelajaran</label>
-                  <input type="text" defaultValue="Sejarah" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="text" name="subject" value={profile.subject} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5 md:col-span-2">
                   <label className="text-sm font-bold text-slate-700">Nama Sekolah</label>
-                  <input type="text" defaultValue="SMA Negeri 1 Nusantara" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="text" name="school" value={profile.school} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">Email</label>
-                  <input type="email" defaultValue="paijo@sekolah.id" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="email" name="email" value={profile.email} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-slate-700">Nomor HP</label>
-                  <input type="tel" defaultValue="08123456789" className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
+                  <input type="tel" name="phone" value={profile.phone} onChange={handleProfileChange} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none" />
                 </div>
               </div>
             </div>
@@ -105,10 +149,27 @@ export default function SettingsView() {
             <div className="flex justify-end border-t border-slate-100 pt-6">
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm cursor-pointer"
+                disabled={isSaving}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm ${
+                  saveStatus === 'success' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' :
+                  saveStatus === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
+                  isSaving ? 'bg-indigo-400 cursor-not-allowed text-white' :
+                  'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                }`}
               >
-                {isSaved ? <CheckCircle size={18} /> : <Save size={18} />}
-                <span>{isSaved ? 'Tersimpan!' : 'Simpan Perubahan'}</span>
+                {isSaving ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : saveStatus === 'success' ? (
+                  <CheckCircle size={18} />
+                ) : (
+                  <Save size={18} />
+                )}
+                <span>
+                  {isSaving ? 'Menyimpan...' : 
+                   saveStatus === 'success' ? 'Tersimpan!' : 
+                   saveStatus === 'error' ? 'Gagal Disimpan' : 
+                   'Simpan Perubahan'}
+                </span>
               </button>
             </div>
           </motion.div>

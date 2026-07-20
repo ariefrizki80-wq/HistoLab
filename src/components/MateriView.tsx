@@ -4,7 +4,7 @@ import {
   Presentation, Sliders, ArrowLeft, ArrowRight, BookOpen, 
   ChevronDown, ChevronUp, Layers, Minimize2, ExternalLink, 
   FileText, CheckCircle2, Focus, Eye, Target, MapPin,
-  Copy, Settings, Type, Image, Quote, ArrowUp, ArrowDown, Tv
+  Copy, Settings, Type, Image, Quote, ArrowUp, ArrowDown, Tv, Upload, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Material, ClassItem, TimelineEvent, HistoricalMap, StoryScene, StoryMediaItem } from '../types';
@@ -655,6 +655,39 @@ export default function MateriView({
     setFormMaps(updated);
   };
 
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingImage(false);
+    
+    let file: File | null = null;
+    if ('dataTransfer' in e) {
+      file = e.dataTransfer.files[0];
+    } else if ('target' in e && e.target.files) {
+      file = e.target.files[0];
+    }
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Mohon unggah file gambar yang valid (JPG, PNG, GIF).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran gambar maksimal 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target && typeof event.target.result === 'string') {
+        setFormImageUrl(event.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Handle submit for Create/Edit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -868,14 +901,43 @@ export default function MateriView({
             {/* Multimedia Image Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200">
               <div>
-                <label className="block text-slate-700 mb-1.5">URL Gambar Pendukung (Unsplash/Web)</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={formImageUrl}
-                  onChange={e => setFormImageUrl(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
-                />
+                <label className="block text-slate-700 mb-1.5">Gambar Pendukung Topik</label>
+                {!formImageUrl ? (
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setIsDraggingImage(false); }}
+                    onDrop={handleImageUpload}
+                    className={`relative w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all bg-white cursor-pointer ${
+                      isDraggingImage ? 'border-indigo-500 bg-indigo-50 scale-[1.02]' : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="w-12 h-12 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center mb-3">
+                      <Upload size={24} />
+                    </div>
+                    <p className="font-bold text-sm text-slate-700">Pilih file atau drag & drop di sini</p>
+                    <p className="text-xs text-slate-500 mt-1">JPG, PNG, GIF up to 5MB</p>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-200 group">
+                    <img src={formImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                      <button
+                        type="button"
+                        onClick={() => setFormImageUrl('')}
+                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-sm"
+                        title="Hapus Gambar"
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-slate-700 mb-1.5">Keterangan Gambar / Hak Cipta</label>
@@ -1178,11 +1240,11 @@ export default function MateriView({
         </div>
       ) : (
         /* STANDARD VIEWING MODE */
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="materi-view-panel">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100vh-140px)] min-h-[600px]" id="materi-view-panel">
           {/* LEFT PANEL: CATEGORY FILTER & MATERIALS LIST */}
-          <div className="md:col-span-4 lg:col-span-3 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
+          <div className="md:col-span-4 lg:col-span-3 h-full min-h-0">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col gap-4 h-full">
+              <div className="flex items-center justify-between shrink-0">
                 <h3 className="font-bold text-lg text-slate-900">Perpustakaan Sejarah</h3>
                 <button
                   onClick={handleStartCreate}
@@ -1193,7 +1255,7 @@ export default function MateriView({
               </div>
 
               {/* Class Filter Dropdown */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 shrink-0">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Filter Kelas:</label>
                 <select
                   value={selectedClassId}
@@ -1218,7 +1280,7 @@ export default function MateriView({
               </div>
 
               {/* Materials List */}
-              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
                 {filteredMaterials.map(mat => {
                   const targetClass = classes.find(c => c.id === mat.classId);
                   return (
@@ -1254,11 +1316,11 @@ export default function MateriView({
           </div>
 
           {/* RIGHT PANEL: RICH MATERIAL CONTENT WINDOW */}
-          <div className="md:col-span-8 lg:col-span-9">
+          <div className="md:col-span-8 lg:col-span-9 h-full min-h-0">
             {activeMaterial ? (
-              <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+              <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full">
                 {/* Content Toolbar */}
-                <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 shrink-0">
                   <div className="flex items-center gap-3">
                     <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg font-bold">
                       {activeMaterial.bab}
@@ -1318,7 +1380,7 @@ export default function MateriView({
                 </div>
 
                 {/* Content Window */}
-                <div className="p-8 md:p-10 space-y-10 max-h-[800px] overflow-y-auto custom-scrollbar">
+                <div className="p-8 md:p-10 space-y-10 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                   {/* Title Header */}
                   <div className="space-y-3 border-b border-slate-100 pb-6">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">

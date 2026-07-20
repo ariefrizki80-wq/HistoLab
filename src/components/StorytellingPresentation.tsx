@@ -50,9 +50,7 @@ export function StorytellingPresentation({
   const handleNext = () => {
     // If map scene has walking steps, step map pin
     if (currentScene.type === 'map') {
-      const maxSteps = currentScene.useGeographicMap
-        ? ((currentScene.scenePins || []).filter(p => !p.hidden).length)
-        : (activeMaterial.maps?.find(m => m.id === currentScene.activeMapId)?.pins?.length || 0);
+      const maxSteps = activeMaterial.maps?.find(m => m.id === currentScene.activeMapId)?.pins?.length || 0;
       if (mapWalkIndex < maxSteps - 1) {
         setMapWalkIndex(mapWalkIndex + 1);
         return;
@@ -97,9 +95,7 @@ export function StorytellingPresentation({
       setQuizRevealed(false);
       const prevScene = localScenes[activeSceneIndex - 1];
       if (prevScene?.type === 'map') {
-        const maxSteps = prevScene.useGeographicMap
-          ? ((prevScene.scenePins || []).filter(p => !p.hidden).length)
-          : (activeMaterial.maps?.find(m => m.id === prevScene.activeMapId)?.pins?.length || 0);
+        const maxSteps = activeMaterial.maps?.find(m => m.id === prevScene.activeMapId)?.pins?.length || 0;
         setMapWalkIndex(Math.max(0, maxSteps - 1));
       } else if (prevScene?.type === 'timeline') {
         setActiveTimelineIndex(Math.max(0, (activeMaterial.timeline?.length || 1) - 1));
@@ -371,14 +367,15 @@ export function StorytellingPresentation({
                 {/* Interactive Map Visualizer */}
                 <div className="flex-1 my-3 relative overflow-hidden rounded-2xl border border-slate-900 bg-[#070B13]">
                   {(() => {
-                    const pins = (currentScene.scenePins || []).filter(p => !p.hidden);
+                    const linkedMap = activeMaterial.maps?.find(m => m.id === currentScene.activeMapId);
+                    const pins = (linkedMap?.pins || []).filter(p => !p.hidden);
                     const activePin = pins[mapWalkIndex] || null;
 
                     return (
                       <div className="w-full h-full relative">
                         <GeographicOpenStreetMap
                           pins={pins}
-                          showRoute={true}
+                          showRoute={linkedMap?.showRoute ?? true}
                           activePinId={activePin?.id || null}
                           onPinClick={(p) => {
                             const idx = pins.findIndex(x => x.id === p.id);

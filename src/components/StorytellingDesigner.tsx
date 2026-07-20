@@ -4,7 +4,6 @@ import {
 } from 'lucide-react';
 import { Material, StoryScene } from '../types';
 import { MapBackground } from './HistoricalMapEngine';
-import { InteractiveMap } from './InteractiveMap';
 
 interface StorytellingDesignerProps {
   activeMaterial: Material;
@@ -59,7 +58,7 @@ export function StorytellingDesigner({
   setMapWalkIndex,
   setQuizRevealed
 }: StorytellingDesignerProps) {
-  const [isEditingGisPins, setIsEditingGisPins] = useState(false);
+  
 
   const activeScene = localScenes.find(s => s.id === selectedSceneId) || localScenes[0] || {
     id: 'default',
@@ -114,7 +113,7 @@ export function StorytellingDesigner({
       <div className="flex-1 flex overflow-hidden min-h-0">
         
         {/* A. LEFT PANEL: SLIDE LIST / STORYBOARD MAP */}
-        <div className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-full shrink-0">
+        <div className="w-60 bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-full shrink-0">
           <div className="p-3.5 border-b border-slate-800 flex items-center justify-between shrink-0">
             <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest">Alur Cerita ({localScenes.length})</span>
           </div>
@@ -235,12 +234,12 @@ export function StorytellingDesigner({
         </div>
 
         {/* B. MIDDLE AREA: INTERACTIVE VISUAL PREVIEW CANVAS */}
-        <div className="flex-1 bg-slate-950 p-6 flex flex-col justify-center items-center overflow-hidden min-w-0">
-          <div className="text-center mb-2 text-[10px] font-mono text-slate-500">
+        <div className="flex-1 bg-slate-950 p-4 md:p-8 flex flex-col justify-center items-center overflow-hidden min-w-0">
+          <div className="text-center mb-4 text-[10px] font-mono text-slate-500">
             Double-click pada teks/kutipan untuk edit langsung • Drag handles di properties untuk reposisi
           </div>
 
-          <div className="relative w-full max-w-4xl aspect-video bg-[#0B0F19] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden shrink-0">
+          <div className="relative w-full max-w-6xl xl:max-w-[1400px] aspect-video bg-[#0B0F19] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden shrink-0 transition-all">
             {/* Scene backgrounds */}
             {activeScene.backgroundType === 'dark_slate' && (
               <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 flex flex-col justify-between p-4 md:p-8">
@@ -291,63 +290,59 @@ export function StorytellingDesigner({
                       <span className="text-[9px] font-mono font-bold text-cyan-400 uppercase tracking-widest block">GIS Live Staging Map</span>
                       <h4 className="text-xs font-bold text-white uppercase">{activeScene.title || "Rute Perjalanan Geografis"}</h4>
                     </div>
-                    <button 
-                      onClick={() => {
-                        if (!activeScene.useGeographicMap) {
-                          handleUpdateSceneMeta({ useGeographicMap: true });
-                        }
-                        setIsEditingGisPins(true);
-                      }}
-                      className="px-3 py-1 bg-cyan-400/15 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold rounded-lg hover:bg-cyan-400/20 cursor-pointer transition-colors"
-                    >
-                      Buka Map Editor
-                    </button>
                   </div>
 
                   {/* List of dropped geographic pins */}
                   <div className="z-10 flex-1 my-4 flex items-center justify-center overflow-y-auto max-h-[140px] no-scrollbar">
-                    {activeScene.scenePins && activeScene.scenePins.length > 0 ? (
-                      <div className="flex flex-wrap items-center justify-center gap-3 max-w-lg">
-                        {activeScene.scenePins.map((pin, pIdx) => (
-                          <React.Fragment key={pin.id}>
-                            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
-                              <span className="w-4 h-4 rounded bg-cyan-400 text-slate-950 font-mono font-black text-[9px] flex items-center justify-center shrink-0">
-                                {pIdx + 1}
-                              </span>
-                              <div>
-                                <h5 className="text-[10px] font-bold text-white truncate max-w-[90px]">{pin.label}</h5>
-                                <p className="text-[7px] font-mono text-slate-500">{pin.lat?.toFixed(3)}, {pin.lng?.toFixed(3)}</p>
+                    {(() => {
+                      const linkedMap = activeMaterial.maps?.find(m => m.id === activeScene.activeMapId);
+                      if (!linkedMap) {
+                        return (
+                          <div className="text-center space-y-2">
+                            <MapPin className="text-cyan-400 mx-auto opacity-50" size={24} />
+                            <p className="text-slate-400 text-xs">Belum ada peta yang dihubungkan.</p>
+                            <p className="text-[9px] text-slate-500">Pilih peta dari panel sebelah kanan.</p>
+                          </div>
+                        );
+                      }
+
+                      if (!linkedMap.pins || linkedMap.pins.length === 0) {
+                        return (
+                          <div className="text-center space-y-2">
+                            <MapPin className="text-cyan-400 mx-auto" size={24} />
+                            <p className="text-slate-400 text-xs">Peta {linkedMap.name} belum memiliki pin rute.</p>
+                            <p className="text-[9px] text-slate-500">Silakan tambahkan pin dari menu Bank Materi.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="flex flex-wrap items-center justify-center gap-3 max-w-lg">
+                          {linkedMap.pins.map((pin, pIdx) => (
+                            <React.Fragment key={pin.id}>
+                              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg">
+                                <span className="w-4 h-4 rounded bg-cyan-400 text-slate-950 font-mono font-black text-[9px] flex items-center justify-center shrink-0">
+                                  {pIdx + 1}
+                                </span>
+                                <div>
+                                  <h5 className="text-[10px] font-bold text-white truncate max-w-[90px]">{pin.label}</h5>
+                                  <p className="text-[7px] font-mono text-slate-500">{pin.lat?.toFixed(3) || 0}, {pin.lng?.toFixed(3) || 0}</p>
+                                </div>
                               </div>
-                            </div>
-                            {pIdx < activeScene.scenePins.length - 1 && (
-                              <ChevronRight className="text-cyan-500 animate-pulse" size={14} />
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center space-y-2 pointer-events-auto">
-                        <MapPin className="text-cyan-400 mx-auto animate-bounce" size={24} />
-                        <p className="text-slate-400 text-xs">Belum ada pin diletakkan di koordinat peta.</p>
-                        <button 
-                          onClick={() => {
-                            if (!activeScene.useGeographicMap) {
-                              handleUpdateSceneMeta({ useGeographicMap: true });
-                            }
-                            setIsEditingGisPins(true);
-                          }}
-                          className="px-4 py-1.5 bg-cyan-400 hover:bg-cyan-500 text-slate-950 text-[10px] font-extrabold rounded-lg shadow cursor-pointer"
-                        >
-                          Klik di Sini untuk Drop Pins Pertama
-                        </button>
-                      </div>
-                    )}
+                              {pIdx < linkedMap.pins.length - 1 && (
+                                <ChevronRight className="text-cyan-500 animate-pulse" size={14} />
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="z-10 bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center gap-2 max-w-sm">
                     <Info size={12} className="text-cyan-400 shrink-0" />
                     <p className="text-[8px] text-slate-300 leading-normal">
-                      Peta rute perjalanan di atas akan dirender secara interaktif menggunakan OpenStreetMap di slide presentasi.
+                      Peta rute perjalanan di atas akan dirender secara interaktif menggunakan data dari Bank Materi di slide presentasi.
                     </p>
                   </div>
                 </div>
@@ -456,163 +451,138 @@ export function StorytellingDesigner({
         </div>
 
         {/* C. RIGHT PANEL: DETAILED PROPERTIES INSPECTOR */}
-        <div className="w-80 bg-slate-900 border-l border-slate-800 p-4 space-y-5 overflow-y-auto no-scrollbar shrink-0 text-left">
+        <div className="w-72 bg-slate-900 border-l border-slate-800 p-4 space-y-5 overflow-y-auto no-scrollbar shrink-0 text-left flex flex-col">
           
-          {/* Slide settings */}
-          <div className="space-y-3.5 border-b border-slate-800 pb-4">
-            <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest block">Slide Settings</span>
-            
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Judul Slide:</label>
-              <input
-                type="text"
-                value={activeScene.title}
-                onChange={(e) => handleUpdateSceneMeta({ title: e.target.value })}
-                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-slate-100 outline-none focus:border-amber-500/50"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Catatan Narasi Guru:</label>
-              <textarea
-                value={activeScene.narration || ''}
-                onChange={(e) => handleUpdateSceneMeta({ narration: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-serif text-slate-300 outline-none focus:border-amber-500/50 resize-none"
-                placeholder="Ketik poin narasi guru untuk memandu bercerita di kelas..."
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Tipe Background:</label>
-                <select
-                  value={activeScene.backgroundType}
-                  onChange={(e) => handleUpdateSceneMeta({ backgroundType: e.target.value as any })}
-                  className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 outline-none focus:border-amber-500/50"
-                >
-                  <option value="dark_slate">Dark Slate</option>
-                  <option value="parchment">Parchment</option>
-                  <option value="gradient">Gradient</option>
-                  <option value="color">Warna Solid</option>
-                </select>
+          {!selectedMediaItem ? (
+            <div className="space-y-3.5 flex-1 pb-4">
+              <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest block border-b border-slate-800 pb-2">Slide Settings</span>
+              
+              <div className="space-y-1.5 pt-2">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Judul Slide:</label>
+                <input
+                  type="text"
+                  value={activeScene.title}
+                  onChange={(e) => handleUpdateSceneMeta({ title: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-slate-100 outline-none focus:border-amber-500/50"
+                />
               </div>
 
-              {activeScene.backgroundType === 'color' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Catatan Narasi Guru:</label>
+                <textarea
+                  value={activeScene.narration || ''}
+                  onChange={(e) => handleUpdateSceneMeta({ narration: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-serif text-slate-300 outline-none focus:border-amber-500/50 resize-none"
+                  placeholder="Ketik poin narasi guru untuk memandu bercerita di kelas..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Warna Background:</label>
-                  <input
-                    type="color"
-                    value={activeScene.backgroundValue || '#0F172A'}
-                    onChange={(e) => handleUpdateSceneMeta({ backgroundValue: e.target.value })}
-                    className="w-full h-8 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer p-0.5"
-                  />
+                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Tipe Background:</label>
+                  <select
+                    value={activeScene.backgroundType}
+                    onChange={(e) => handleUpdateSceneMeta({ backgroundType: e.target.value as any })}
+                    className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 outline-none focus:border-amber-500/50"
+                  >
+                    <option value="dark_slate">Dark Slate</option>
+                    <option value="parchment">Parchment</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="color">Warna Solid</option>
+                  </select>
+                </div>
+
+                {activeScene.backgroundType === 'color' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Warna Background:</label>
+                    <input
+                      type="color"
+                      value={activeScene.backgroundValue || '#0F172A'}
+                      onChange={(e) => handleUpdateSceneMeta({ backgroundValue: e.target.value })}
+                      className="w-full h-8 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer p-0.5"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* If slide type is MAP: link to an existing HistoricalMap */}
+              {activeScene.type === 'map' && (
+                <div className="space-y-3.5 pt-2 border-t border-slate-800/60 mt-2">
+                  <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-400">Peta Terhubung:</span>
+                    </div>
+                    
+                    <select
+                      value={activeScene.activeMapId || ''}
+                      onChange={(e) => handleUpdateSceneMeta({ activeMapId: e.target.value })}
+                      className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 outline-none focus:border-cyan-500/50"
+                    >
+                      <option value="">-- Pilih Peta dari Bank Materi --</option>
+                      {activeMaterial.maps?.map(mapItem => (
+                        <option key={mapItem.id} value={mapItem.id}>
+                          {mapItem.name} ({mapItem.pins?.length || 0} Pin)
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="text-[9px] text-slate-500 mt-2 leading-relaxed">
+                      Peta dan pin (titik rute) dibuat dari Bank Materi. Sistem ini memastikan sinkronisasi data (Single Source of Truth) antara dashboard dan presentasi.
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* If slide type is MAP: design interactive GIS route pins */}
-            {activeScene.type === 'map' && (
-              <div className="space-y-3.5 pt-2 border-t border-slate-800/60 mt-2">
-                <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400">Tipe Peta:</span>
-                    <span className="font-bold text-cyan-400 uppercase">Peta Online (OpenStreetMap)</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400">Jumlah Pin Rute:</span>
-                    <span className="font-bold text-cyan-400">{activeScene.scenePins?.length || 0} Pin</span>
-                  </div>
-
+              <div className="space-y-3.5 border-t border-slate-800 pt-4 mt-auto">
+                <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest block text-left">Tambah Elemen Baru</span>
+                <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
                   <button
-                    onClick={() => {
-                      if (!activeScene.useGeographicMap) {
-                        handleUpdateSceneMeta({ useGeographicMap: true });
-                      }
-                      setIsEditingGisPins(true);
-                    }}
-                    className="w-full py-2 bg-cyan-400 hover:bg-cyan-500 text-slate-950 text-[10px] font-extrabold rounded-xl flex items-center justify-center gap-1.5 shadow transition-colors cursor-pointer mt-1"
+                    onClick={() => handleAddMediaItem('title')}
+                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Compass size={11} className="animate-spin-slow text-slate-950" /> Buka Editor Peta (Drop Pins)
+                    <Type size={12} className="text-indigo-400" /> Judul
                   </button>
-
-                  {/* Quick Pin List & Toggle Settings */}
-                  {activeScene.scenePins && activeScene.scenePins.length > 0 && (
-                    <div className="border-t border-slate-800/80 pt-3 mt-3 space-y-2">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block">Kelola Pin Sejarah (Quick Edit)</span>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar">
-                        {activeScene.scenePins.map((pin, pIdx) => {
-                          return (
-                            <div key={pin.id} className="bg-slate-950/50 border border-slate-900 p-2 rounded-xl flex items-center gap-2">
-                              {/* Number Badge */}
-                              <div className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] font-mono shrink-0 ${
-                                pin.hidden ? 'bg-slate-800 text-slate-500' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                              }`}>
-                                {pIdx + 1}
-                              </div>
-
-                              {/* Input field to edit label directly */}
-                              <input
-                                type="text"
-                                value={pin.label}
-                                onChange={(e) => {
-                                  const updatedPins = activeScene.scenePins!.map(p => {
-                                    if (p.id === pin.id) {
-                                      return { ...p, label: e.target.value };
-                                    }
-                                    return p;
-                                  });
-                                  handleUpdateSceneMeta({ scenePins: updatedPins });
-                                }}
-                                className={`flex-1 min-w-0 bg-transparent text-xs font-bold text-white px-1.5 py-0.5 border border-transparent rounded focus:border-cyan-500/30 hover:bg-slate-900/30 outline-none ${
-                                  pin.hidden ? 'line-through text-slate-500 font-normal' : ''
-                                }`}
-                                placeholder="Edit Label Pin..."
-                              />
-
-                              {/* On/Off Visibility Toggle Button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updatedPins = activeScene.scenePins!.map(p => {
-                                    if (p.id === pin.id) {
-                                      return { ...p, hidden: !p.hidden };
-                                    }
-                                    return p;
-                                  });
-                                  handleUpdateSceneMeta({ scenePins: updatedPins });
-                                }}
-                                className={`p-1 rounded cursor-pointer transition-colors ${
-                                  pin.hidden 
-                                    ? 'text-slate-600 hover:text-slate-400 hover:bg-slate-900' 
-                                    : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40'
-                                }`}
-                                title={pin.hidden ? "Aktifkan Pin" : "Nonaktifkan Pin"}
-                              >
-                                {pin.hidden ? <EyeOff size={11} /> : <Eye size={11} />}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => handleAddMediaItem('text')}
+                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText size={12} className="text-emerald-400" /> Paragraf
+                  </button>
+                  <button
+                    onClick={() => handleAddMediaItem('quote')}
+                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Quote size={12} className="text-amber-400" /> Kutipan
+                  </button>
+                  <button
+                    onClick={() => handleAddMediaItem('image')}
+                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Image size={12} className="text-cyan-400" /> Gambar
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Selected media item inspector */}
-          {selectedMediaItem ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest">Properties Elemen</span>
-                <button
-                  onClick={() => handleDeleteMediaItem(selectedMediaItem.id)}
-                  className="px-2 py-1 bg-red-955/40 border border-red-900/30 text-red-400 text-[10px] font-bold rounded-lg hover:bg-red-900/20 cursor-pointer"
+            </div>
+          ) : (
+            <div className="space-y-4 flex-1">
+              <div className="flex flex-col gap-2 border-b border-slate-800 pb-3">
+                <button 
+                  onClick={() => setSelectedMediaItemId(null)}
+                  className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-white transition-colors cursor-pointer w-fit"
                 >
-                  Hapus
+                  <Navigation size={10} className="-rotate-90" /> Kembali ke Slide
                 </button>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest">Properties Elemen</span>
+                  <button
+                    onClick={() => handleDeleteMediaItem(selectedMediaItem.id)}
+                    className="px-2 py-1 bg-red-955/40 border border-red-900/30 text-red-400 text-[10px] font-bold rounded-lg hover:bg-red-900/20 cursor-pointer"
+                  >
+                    Hapus
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -730,59 +700,9 @@ export function StorytellingDesigner({
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-center py-6 text-slate-500 text-xs italic border border-dashed border-slate-850 rounded-xl bg-slate-950/10">
-                Pilih elemen visual pada slide untuk merubah propertinya.
-              </div>
-              
-              <div className="space-y-3.5 border-t border-slate-800 pt-4">
-                <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest block text-left">Tambah Elemen Baru</span>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                  <button
-                    onClick={() => handleAddMediaItem('title')}
-                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Type size={12} className="text-indigo-400" /> Judul
-                  </button>
-                  <button
-                    onClick={() => handleAddMediaItem('text')}
-                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <FileText size={12} className="text-emerald-400" /> Paragraf
-                  </button>
-                  <button
-                    onClick={() => handleAddMediaItem('quote')}
-                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Quote size={12} className="text-amber-400" /> Kutipan
-                  </button>
-                  <button
-                    onClick={() => handleAddMediaItem('image')}
-                    className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-850 rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Image size={12} className="text-cyan-400" /> Gambar URL
-                  </button>
-                </div>
-              </div>
-            </div>
           )}
         </div>
-
       </div>
-
-      {isEditingGisPins && (
-        <InteractiveMap
-          initialPins={activeScene.scenePins || []}
-          sceneTitle={activeScene.title}
-          onSave={(pins) => {
-            handleUpdateSceneMeta({ scenePins: pins });
-            setIsEditingGisPins(false);
-          }}
-          onClose={() => setIsEditingGisPins(false)}
-        />
-      )}
-
     </div>
   );
 }

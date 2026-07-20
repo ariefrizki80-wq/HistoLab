@@ -563,19 +563,19 @@ export default function KelasView({
                                       <td className="py-4 px-6 font-mono font-medium text-slate-600">{std.nis}</td>
                                       <td className="py-4 px-6 font-bold text-slate-900">{std.name}</td>
                                       <td className="py-4 px-6">
-                                        <div className="flex justify-center items-center gap-2 max-w-sm mx-auto">
+                                        <div className="flex justify-center items-center gap-2 max-w-lg mx-auto">
                                           {(['Hadir', 'Sakit', 'Izin', 'Alpa'] as AttendanceStatus[]).map(status => {
                                             const colors = {
-                                              'Hadir': currentStatus === 'Hadir' ? 'bg-emerald-500 text-white shadow-sm' : 'hover:bg-emerald-50 text-emerald-600 border border-slate-200',
-                                              'Sakit': currentStatus === 'Sakit' ? 'bg-blue-500 text-white shadow-sm' : 'hover:bg-blue-50 text-blue-600 border border-slate-200',
-                                              'Izin': currentStatus === 'Izin' ? 'bg-amber-500 text-white shadow-sm' : 'hover:bg-amber-50 text-amber-600 border border-slate-200',
-                                              'Alpa': currentStatus === 'Alpa' ? 'bg-red-500 text-white shadow-sm' : 'hover:bg-red-50 text-red-600 border border-slate-200'
+                                              'Hadir': currentStatus === 'Hadir' ? 'bg-emerald-500 text-white shadow-md scale-[1.02]' : 'hover:bg-emerald-50 text-emerald-600 border border-slate-200 bg-white',
+                                              'Sakit': currentStatus === 'Sakit' ? 'bg-blue-500 text-white shadow-md scale-[1.02]' : 'hover:bg-blue-50 text-blue-600 border border-slate-200 bg-white',
+                                              'Izin': currentStatus === 'Izin' ? 'bg-amber-500 text-white shadow-md scale-[1.02]' : 'hover:bg-amber-50 text-amber-600 border border-slate-200 bg-white',
+                                              'Alpa': currentStatus === 'Alpa' ? 'bg-red-500 text-white shadow-md scale-[1.02]' : 'hover:bg-red-50 text-red-600 border border-slate-200 bg-white'
                                             };
                                             return (
                                               <button
                                                 key={status}
                                                 onClick={() => onUpdateMeetingAttendance(activeClass.id, selectedMeeting.id, std.id, status)}
-                                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold text-center transition-all cursor-pointer ${colors[status]}`}
+                                                className={`flex-1 py-2.5 px-2 rounded-xl text-sm font-bold text-center transition-all cursor-pointer ${colors[status]}`}
                                               >
                                                 {status}
                                               </button>
@@ -811,13 +811,13 @@ export default function KelasView({
 
       {/* POPUP MODAL: CREATE/EDIT STUDENT */}
       {isStudentModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-sm w-full shadow-xl p-8 space-y-6">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full my-auto shadow-xl p-6 sm:p-8 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="font-bold text-lg text-slate-900">
                 {editingStudent ? 'Edit Profil Siswa' : 'Tambah Siswa Baru'}
               </h3>
-              <button onClick={() => setIsStudentModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">✕</button>
+              <button onClick={() => setIsStudentModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer p-2 rounded-lg hover:bg-slate-100">✕</button>
             </div>
             <form onSubmit={handleStudentSubmit} className="space-y-4 text-sm font-medium">
               <div>
