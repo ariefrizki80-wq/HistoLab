@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles } from 'lucide-react';
+import SettingsView from './components/SettingsView';
+import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import { ClassItem, Material, CalendarEvent, ReminderNote, Student, Meeting, GradeItem, AttendanceStatus } from './types';
 import { INITIAL_CLASSES, INITIAL_MATERIALS, INITIAL_CALENDAR_EVENTS, INITIAL_REMINDERS } from './data/initialData';
 import DashboardView from './components/DashboardView';
@@ -14,7 +15,7 @@ export default function App() {
   const [reminders, setReminders] = useState<ReminderNote[]>([]);
   
   // Navigation states
-  const [activeView, setActiveView] = useState<'dashboard' | 'kelas' | 'materi'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'kelas' | 'materi' | 'pengaturan'>('dashboard');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [materiInitialMaterialId, setMateriInitialMaterialId] = useState<string | null>(null);
   const [materiInitialMode, setMateriInitialMode] = useState<'view' | 'presentation' | null>(null);
@@ -471,6 +472,21 @@ export default function App() {
                 <BookOpen size={18} />
                 <span>Bank Materi</span>
               </button>
+
+              <button
+                onClick={() => {
+                  setActiveView('pengaturan');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer mt-4 ${
+                  activeView === 'pengaturan'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <SettingsIcon size={18} />
+                <span>Pengaturan</span>
+              </button>
             </nav>
           </div>
 
@@ -496,9 +512,9 @@ export default function App() {
       )}
 
       {/* MAIN VIEW AREA */}
-      <main className={`flex-1 flex flex-col z-10 w-full ${
+      <main className={`flex-1 flex flex-col z-10 w-full max-w-[1600px] mx-auto ${
         isPresentationModeActive 
-          ? 'p-0 gap-0 h-screen overflow-hidden bg-slate-950' 
+          ? 'p-0 gap-0 h-screen overflow-hidden bg-slate-950 max-w-full' 
           : 'p-6 md:p-8 gap-6 overflow-y-auto h-[calc(100vh-56px)] md:h-screen'
       }`}>
         {/* Dynamic header row on desktop */}
@@ -566,6 +582,9 @@ export default function App() {
             }}
             onModeChange={setCurrentMateriMode}
           />
+        )}
+        {activeView === 'pengaturan' && (
+          <SettingsView />
         )}
       </main>
     </div>

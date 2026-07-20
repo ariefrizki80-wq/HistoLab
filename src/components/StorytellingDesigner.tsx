@@ -347,7 +347,7 @@ export function StorytellingDesigner({
                   <div className="z-10 bg-slate-900/90 border border-slate-800 p-2 rounded-xl flex items-center gap-2 max-w-sm">
                     <Info size={12} className="text-cyan-400 shrink-0" />
                     <p className="text-[8px] text-slate-300 leading-normal">
-                      Peta rute perjalanan di atas akan dirender secara interaktif menggunakan Google Maps Platform di slide presentasi.
+                      Peta rute perjalanan di atas akan dirender secara interaktif menggunakan OpenStreetMap di slide presentasi.
                     </p>
                   </div>
                 </div>
@@ -517,7 +517,7 @@ export function StorytellingDesigner({
                 <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
                   <div className="flex items-center justify-between text-[10px]">
                     <span className="text-slate-400">Tipe Peta:</span>
-                    <span className="font-bold text-cyan-400 uppercase">Peta Online (Google Map)</span>
+                    <span className="font-bold text-cyan-400 uppercase">Peta Online (OpenStreetMap)</span>
                   </div>
                   <div className="flex items-center justify-between text-[10px]">
                     <span className="text-slate-400">Jumlah Pin Rute:</span>

@@ -4,7 +4,6 @@ import {
   Play, Pause, SkipForward, SkipBack, MousePointer, Info, RotateCcw, HelpCircle, Compass, Globe, Map
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { APIProvider, Map as GoogleMapComponent, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import { HistoricalMap, MapPin as PinType } from '../types';
 
 // ==========================================
@@ -339,155 +338,6 @@ export function GeographicOpenStreetMap({
   );
 }
 
-// Google Maps map viewport controller
-function GoogleMapController({ activePin, pins }: { activePin: PinType | null; pins: PinType[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !activePin) return;
-    let lat = activePin.lat;
-    let lng = activePin.lng;
-    if (lat === undefined || lng === undefined) {
-      lng = 95 + (activePin.x / 100) * 46;
-      lat = 6 - (activePin.y / 100) * 17;
-    }
-    map.panTo({ lat, lng });
-    map.setZoom(8);
-  }, [map, activePin]);
-
-  useEffect(() => {
-    if (!map || activePin || pins.length === 0) return;
-    const bounds = new google.maps.LatLngBounds();
-    let hasCoords = false;
-    pins.forEach(p => {
-      let lat = p.lat;
-      let lng = p.lng;
-      if (lat === undefined || lng === undefined) {
-        lng = 95 + (p.x / 100) * 46;
-        lat = 6 - (p.y / 100) * 17;
-      }
-      bounds.extend({ lat, lng });
-      hasCoords = true;
-    });
-    if (hasCoords) {
-      map.fitBounds(bounds, 50);
-    }
-  }, [map, activePin, pins]);
-
-  return null;
-}
-
-// Google Maps component
-interface GeographicGoogleMapProps {
-  pins: PinType[];
-  showRoute?: boolean;
-  onMapClick?: (lat: number, lng: number) => void;
-  onPinClick?: (pin: PinType) => void;
-  editorMode?: 'pan' | 'add-pin';
-  activePinId?: string | null;
-}
-
-export function GeographicGoogleMap({
-  pins,
-  showRoute = true,
-  onMapClick,
-  onPinClick,
-  editorMode = 'pan',
-  activePinId
-}: GeographicGoogleMapProps) {
-  const API_KEY =
-    process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-    (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-    (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-    '';
-  const hasValidKey = Boolean(API_KEY) && API_KEY !== '';
-
-  if (!hasValidKey) {
-    return (
-      <div className="absolute inset-0 bg-slate-950 flex items-center justify-center text-center p-6 text-slate-300">
-        <div className="max-w-md bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-2xl">
-          <h3 className="font-bold text-sm text-red-400 uppercase tracking-wider flex items-center gap-1.5 justify-center">
-            ⚠️ API Key Google Maps Diperlukan
-          </h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Untuk merender data sejarah menggunakan visual peta satelit atau jalan dari Google Maps, Anda perlu memasukkan Google Maps Platform API Key ke Secrets AI Studio.
-          </p>
-          <div className="text-[10px] text-left text-slate-400 space-y-2 bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 font-sans">
-            <p className="font-bold text-indigo-400">Cara Menerapkan API Key:</p>
-            <ol className="list-decimal pl-4 space-y-1">
-              <li>Minta/buat API Key gratis di Google Cloud Console</li>
-              <li>Buka menu <strong>Settings</strong> (ikon gerigi ⚙️ kanan atas)</li>
-              <li>Pilih menu tab <strong>Secrets</strong></li>
-              <li>Buat Secret baru: nama <code>GOOGLE_MAPS_PLATFORM_KEY</code></li>
-              <li>Paste API Key sebagai value, klik simpan</li>
-            </ol>
-          </div>
-          <div className="text-[10px] text-indigo-400 font-semibold bg-indigo-950/40 p-2 border border-indigo-900/30 rounded-lg">
-            Saran: Anda dapat memilih penyedia "OpenStreetMap" di editor – ia aktif seketika tanpa kunci apa pun!
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Map click intermediate handler
-  const handleMapClick = (e: any) => {
-    if (editorMode === 'add-pin' && onMapClick && e.detail.latLng) {
-      onMapClick(e.detail.latLng.lat, e.detail.latLng.lng);
-    }
-  };
-
-  const activePin = pins.find(p => p.id === activePinId) || null;
-
-  return (
-    <APIProvider apiKey={API_KEY} version="weekly">
-      <div className="w-full h-full relative">
-        <GoogleMapComponent
-          defaultCenter={{ lat: -2.5489, lng: 118.0149 }}
-          defaultZoom={5}
-          mapId="DEMO_MAP_ID"
-          gestureHandling={editorMode === 'pan' ? 'auto' : 'none'}
-          onClick={handleMapClick}
-          internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <GoogleMapController activePin={activePin} pins={pins} />
-
-          {pins.map((pin, idx) => {
-            const isSelected = activePinId === pin.id;
-            let lat = pin.lat;
-            let lng = pin.lng;
-            if (lat === undefined || lng === undefined) {
-              lng = 95 + (pin.x / 100) * 46;
-              lat = 6 - (pin.y / 100) * 17;
-            }
-
-            return (
-              <AdvancedMarker
-                key={pin.id}
-                position={{ lat, lng }}
-                onClick={() => onPinClick?.(pin)}
-              >
-                <div className="relative flex items-center justify-center select-none cursor-pointer">
-                  <div className={`w-6 h-6 rounded-full border border-white flex items-center justify-center font-bold font-mono shadow-md text-[10px] transition-all ${
-                    isSelected 
-                      ? 'bg-amber-400 text-slate-900 scale-125 ring-4 ring-amber-500/30' 
-                      : 'bg-indigo-600 text-white'
-                  }`}>
-                    {idx + 1}
-                  </div>
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-slate-950/90 border border-slate-800 text-white font-semibold text-[8px] px-1.5 py-0.5 rounded shadow whitespace-nowrap z-50">
-                    {pin.label}
-                  </div>
-                </div>
-              </AdvancedMarker>
-            );
-          })}
-        </GoogleMapComponent>
-      </div>
-    </APIProvider>
-  );
-}
 
 // ==========================================
 // 2. MAIN INTERACTIVE MAP VIEWER COMPONENT
@@ -788,7 +638,7 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
               </>
             ) : (
               <span className="font-mono px-2 py-0.5 bg-indigo-950 text-indigo-300 rounded-md font-bold flex items-center gap-1">
-                <Globe size={12} /> GIS: {mapItem.mapProvider === 'googlemaps' ? 'Google Maps' : 'OpenStreetMap'}
+                <Globe size={12} /> GIS: OpenStreetMap
               </span>
             )}
           </div>
@@ -814,23 +664,13 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
           className={`flex-1 w-full h-full overflow-hidden relative ${mapItem.useGeographicMap ? '' : (isDragging ? 'cursor-grabbing' : 'cursor-grab')}`}
         >
           {mapItem.useGeographicMap ? (
-            mapItem.mapProvider === 'googlemaps' ? (
-              <GeographicGoogleMap
-                pins={pins}
-                showRoute={mapItem.showRoute}
-                onPinClick={(pin) => setActivePin(pin)}
-                activePinId={activePin?.id}
-                editorMode="pan"
-              />
-            ) : (
-              <GeographicOpenStreetMap
-                pins={pins}
-                showRoute={mapItem.showRoute}
-                onPinClick={(pin) => setActivePin(pin)}
-                activePinId={activePin?.id}
-                editorMode="pan"
-              />
-            )
+            <GeographicOpenStreetMap
+              pins={pins}
+              showRoute={mapItem.showRoute}
+              onPinClick={(pin) => setActivePin(pin)}
+              activePinId={activePin?.id}
+              editorMode="pan"
+            />
           ) : (
             /* Zoomable Canvas Wrapper */
             <div 
@@ -1094,7 +934,6 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
   const [pins, setPins] = useState<PinType[]>(mapItem.pins || []);
 
   const [useGeographicMap, setUseGeographicMap] = useState<boolean>(mapItem.useGeographicMap || false);
-  const [mapProvider, setMapProvider] = useState<'openstreetmap' | 'googlemaps'>(mapItem.mapProvider || 'openstreetmap');
 
   // Zoom / Pan state inside editor canvas (only used for non-geographic custom maps)
   const [zoom, setZoom] = useState(1);
@@ -1229,8 +1068,7 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
       mapStyle,
       pins,
       showRoute,
-      useGeographicMap,
-      mapProvider
+      useGeographicMap
     });
     onClose();
   };
@@ -1289,22 +1127,8 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 leading-normal">
-                  Gunakan peta bumi realistik interaktif (seperti Google Maps atau OpenStreetMap) untuk menempatkan titik pinpoint berdasarkan koordinat asli Bumi.
+                  Gunakan peta bumi realistik interaktif (OpenStreetMap) untuk menempatkan titik pinpoint berdasarkan koordinat asli Bumi.
                 </p>
-
-                {useGeographicMap && (
-                  <div className="space-y-1.5 pt-1.5 border-t border-indigo-100 animate-fade-in">
-                    <label className="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider">Penyedia Peta (Map Provider)</label>
-                    <select
-                      value={mapProvider}
-                      onChange={(e) => setMapProvider(e.target.value as any)}
-                      className="w-full p-2 border border-slate-200 rounded-xl bg-white text-xs outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 font-bold text-indigo-700 cursor-pointer"
-                    >
-                      <option value="openstreetmap">🗺️ OpenStreetMap (Aktif Instan)</option>
-                      <option value="googlemaps">🌐 Google Maps (Satelit / Jalan)</option>
-                    </select>
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1596,7 +1420,7 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
               </div>
             ) : (
               <div className="text-[10px] text-indigo-400 font-semibold bg-indigo-950/40 border border-indigo-900/20 px-2.5 py-1 rounded-lg">
-                ✨ GIS {mapProvider === 'googlemaps' ? 'Google Maps' : 'OpenStreetMap'} aktif
+                ✨ GIS OpenStreetMap aktif
               </div>
             )}
           </div>
@@ -1613,25 +1437,14 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
             }`}
           >
             {useGeographicMap ? (
-              mapProvider === 'googlemaps' ? (
-                <GeographicGoogleMap
-                  pins={pins}
-                  showRoute={showRoute}
-                  onMapClick={handleGeographicMapClick}
-                  onPinClick={(pin) => setActivePinId(pin.id)}
-                  activePinId={activePinId}
-                  editorMode={editorMode}
-                />
-              ) : (
-                <GeographicOpenStreetMap
-                  pins={pins}
-                  showRoute={showRoute}
-                  onMapClick={handleGeographicMapClick}
-                  onPinClick={(pin) => setActivePinId(pin.id)}
-                  activePinId={activePinId}
-                  editorMode={editorMode}
-                />
-              )
+              <GeographicOpenStreetMap
+                pins={pins}
+                showRoute={showRoute}
+                onMapClick={handleGeographicMapClick}
+                onPinClick={(pin) => setActivePinId(pin.id)}
+                activePinId={activePinId}
+                editorMode={editorMode}
+              />
             ) : (
               /* Inner Scaled Map */
               <div 

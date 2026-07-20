@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Material, StoryScene } from '../types';
-import { MapBackground, GeographicGoogleMap, GeographicOpenStreetMap } from './HistoricalMapEngine';
+import { MapBackground, GeographicOpenStreetMap } from './HistoricalMapEngine';
 
 interface StorytellingPresentationProps {
   activeMaterial: Material;
@@ -372,37 +372,19 @@ export function StorytellingPresentation({
                 <div className="flex-1 my-3 relative overflow-hidden rounded-2xl border border-slate-900 bg-[#070B13]">
                   {(() => {
                     const pins = (currentScene.scenePins || []).filter(p => !p.hidden);
-                    const API_KEY =
-                      process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-                      (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-                      (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-                      '';
-                    const hasGoogleKey = Boolean(API_KEY) && API_KEY !== '';
                     const activePin = pins[mapWalkIndex] || null;
 
                     return (
                       <div className="w-full h-full relative">
-                        {hasGoogleKey ? (
-                          <GeographicGoogleMap
-                            pins={pins}
-                            showRoute={true}
-                            activePinId={activePin?.id || null}
-                            onPinClick={(p) => {
-                              const idx = pins.findIndex(x => x.id === p.id);
-                              if (idx !== -1) setMapWalkIndex(idx);
-                            }}
-                          />
-                        ) : (
-                          <GeographicOpenStreetMap
-                            pins={pins}
-                            showRoute={true}
-                            activePinId={activePin?.id || null}
-                            onPinClick={(p) => {
-                              const idx = pins.findIndex(x => x.id === p.id);
-                              if (idx !== -1) setMapWalkIndex(idx);
-                            }}
-                          />
-                        )}
+                        <GeographicOpenStreetMap
+                          pins={pins}
+                          showRoute={true}
+                          activePinId={activePin?.id || null}
+                          onPinClick={(p) => {
+                            const idx = pins.findIndex(x => x.id === p.id);
+                            if (idx !== -1) setMapWalkIndex(idx);
+                          }}
+                        />
 
                         {/* Top overlay showing Active GPS Staging HUD */}
                         <div className="absolute top-4 left-4 bg-slate-950/90 border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-[9px] text-cyan-400 pointer-events-none shadow-xl z-20 flex items-center gap-1.5">

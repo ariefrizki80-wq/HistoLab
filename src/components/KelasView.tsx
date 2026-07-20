@@ -64,6 +64,14 @@ export default function KelasView({
   // Grade Item states
   const [isGradeItemModalOpen, setIsGradeItemModalOpen] = useState(false);
   const [gradeItemForm, setGradeItemForm] = useState({ name: '', weight: 25 });
+  
+  const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Handle Create Class
   const handleCreateClassSubmit = (e: React.FormEvent) => {
@@ -244,11 +252,9 @@ export default function KelasView({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm(`Apakah Anda yakin ingin menghapus kelas ${cls.name}? Semua data siswa, absensi, dan nilai di dalamnya akan terhapus permanen.`)) {
-                          onDeleteClass(cls.id);
-                        }
+                        setClassToDelete(cls);
                       }}
-                      className="text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                       title="Hapus Kelas"
                     >
                       <Trash size={14} />
@@ -970,6 +976,48 @@ export default function KelasView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Class Confirmation Modal */}
+      {classToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-sm w-full shadow-2xl p-6 text-center">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={32} />
+            </div>
+            <h3 className="font-bold text-xl text-slate-900 mb-2">Hapus {classToDelete.name}?</h3>
+            <p className="text-slate-500 text-sm mb-6">
+              Seluruh data siswa, jadwal, dan nilai dalam kelas ini akan dihapus secara permanen dan tidak dapat dikembalikan.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setClassToDelete(null)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteClass(classToDelete.id);
+                  setClassToDelete(null);
+                  showToast(`✓ Kelas ${classToDelete.name} berhasil dihapus`);
+                }}
+                className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl cursor-pointer shadow-md shadow-red-500/20"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[70] animate-fade-in">
+          <div className="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-2 border border-slate-700">
+            {toastMessage}
           </div>
         </div>
       )}

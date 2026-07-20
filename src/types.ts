@@ -88,8 +88,7 @@ export interface StoryScene {
   activeMapId?: string; // ID of focused historical map
   activeMapStepIndex?: number; // current step of map route
   scenePins?: MapPin[]; // Custom list of dropped coordinates & labels for this scene
-  useGeographicMap?: boolean; // Toggle dynamic Google Maps vs static map
-  mapProvider?: 'openstreetmap' | 'googlemaps';
+  useGeographicMap?: boolean; // Toggle dynamic map (OpenStreetMap) vs static map
   mapCenterLat?: number;
   mapCenterLng?: number;
   mapZoom?: number;

@@ -5,72 +5,7 @@ import {
   Eye, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { APIProvider, Map as GoogleMapComponent, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import { MapPin as PinType } from '../types';
-
-// Simple polyline renderer using Google Maps JS SDK via useMap hook
-function GoogleMapPolyline({ pins }: { pins: PinType[] }) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (!map || pins.length < 2) return;
-
-    const path = pins
-      .filter(p => p.lat !== undefined && p.lng !== undefined && !p.hidden)
-      .map(p => ({ lat: p.lat!, lng: p.lng! }));
-
-    if (path.length < 2) return;
-
-    const polyline = new google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: '#06B6D4', // cyan-500
-      strokeOpacity: 0.85,
-      strokeWeight: 3,
-      icons: [{
-        icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
-        offset: '100%',
-        repeat: '100px'
-      }]
-    });
-
-    polyline.setMap(map);
-
-    return () => {
-      polyline.setMap(null);
-    };
-  }, [map, pins]);
-
-  return null;
-}
-
-// Controller to handle center/zoom sync for Google Map
-function GoogleMapController({ activePin, pins }: { activePin: PinType | null; pins: PinType[] }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map) return;
-
-    if (activePin && activePin.lat !== undefined && activePin.lng !== undefined && !activePin.hidden) {
-      map.panTo({ lat: activePin.lat, lng: activePin.lng });
-      map.setZoom(8);
-    } else if (pins.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      let hasCoords = false;
-      pins.forEach(p => {
-        if (p.lat !== undefined && p.lng !== undefined && !p.hidden) {
-          bounds.extend({ lat: p.lat, lng: p.lng });
-          hasCoords = true;
-        }
-      });
-      if (hasCoords) {
-        map.fitBounds(bounds, 80);
-      }
-    }
-  }, [map, activePin, pins]);
-
-  return null;
-}
 
 // Hook to load Leaflet resources dynamically for the fallback OSM view
 function useLeafletLoaded() {
@@ -251,7 +186,6 @@ interface InteractiveMapProps {
 export function InteractiveMap({ initialPins = [], onSave, onClose, sceneTitle }: InteractiveMapProps) {
   const [pins, setPins] = useState<PinType[]>(initialPins);
   const [activePinId, setActivePinId] = useState<string | null>(null);
-  const [provider, setProvider] = useState<'googlemaps' | 'openstreetmap'>('openstreetmap');
   
   // Input fields for editing pin properties
   const [pinLabel, setPinLabel] = useState('');
@@ -296,23 +230,6 @@ export function InteractiveMap({ initialPins = [], onSave, onClose, sceneTitle }
     setPins(updated);
   };
 
-  // Get API key
-  const API_KEY =
-    process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-    (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-    (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-    '';
-  const hasGoogleKey = Boolean(API_KEY) && API_KEY !== '';
-
-  // Autodetect Google Maps key
-  useEffect(() => {
-    if (hasGoogleKey) {
-      setProvider('googlemaps');
-    } else {
-      setProvider('openstreetmap');
-    }
-  }, [hasGoogleKey]);
-
   // Sync edit form with selected pin
   useEffect(() => {
     const activePin = pins.find(p => p.id === activePinId);
@@ -341,12 +258,7 @@ export function InteractiveMap({ initialPins = [], onSave, onClose, sceneTitle }
     setActivePinId(newPin.id);
   };
 
-  // Click handler on map for Google Maps wrapper
-  const handleGoogleMapClick = (e: any) => {
-    if (e.detail.latLng) {
-      handleMapClick(e.detail.latLng.lat, e.detail.latLng.lng);
-    }
-  };
+
 
   // Save edits of active pin
   const handleSavePinEdit = () => {
@@ -418,35 +330,7 @@ export function InteractiveMap({ initialPins = [], onSave, onClose, sceneTitle }
           </button>
         </div>
 
-        {/* Map Provider Selector */}
-        <div className="p-3 bg-slate-950/20 border-b border-slate-800 flex items-center justify-between text-xs font-bold gap-2">
-          <span className="text-[10px] text-slate-400 uppercase font-bold">Peta Engine:</span>
-          <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-            <button
-              onClick={() => {
-                if (hasGoogleKey) setProvider('googlemaps');
-                else alert('Sila masukkan GOOGLE_MAPS_PLATFORM_KEY di Secrets terlebih dahulu.');
-              }}
-              className={`px-2 py-1 rounded-md text-[10px] flex items-center gap-1 transition-all ${
-                provider === 'googlemaps' 
-                  ? 'bg-cyan-500 text-slate-950 font-black shadow-md' 
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Globe size={11} /> Google Maps
-            </button>
-            <button
-              onClick={() => setProvider('openstreetmap')}
-              className={`px-2 py-1 rounded-md text-[10px] flex items-center gap-1 transition-all ${
-                provider === 'openstreetmap' 
-                  ? 'bg-cyan-500 text-slate-950 font-black shadow-md' 
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <MapIcon size={11} /> OpenStreetMap
-            </button>
-          </div>
-        </div>
+
 
         {/* Active Pin Edit form */}
         <div className="p-4 border-b border-slate-800 bg-slate-950/30 space-y-3 shrink-0">
@@ -655,75 +539,14 @@ export function InteractiveMap({ initialPins = [], onSave, onClose, sceneTitle }
 
       {/* RIGHT AREA: REAL-TIME GIS VIEWPORT */}
       <div className="flex-1 relative h-[300px] md:h-full">
-        {provider === 'googlemaps' ? (
-          <APIProvider apiKey={API_KEY} version="weekly">
-            <div className="w-full h-full relative">
-              <GoogleMapComponent
-                defaultCenter={{ lat: -2.5489, lng: 118.0149 }}
-                defaultZoom={5}
-                mapId="DEMO_MAP_ID"
-                onClick={handleGoogleMapClick}
-                internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                style={{ width: '100%', height: '100%' }}
-              >
-                <GoogleMapController activePin={activePin} pins={pins} />
-                <GoogleMapPolyline pins={pins} />
-
-                 {pins.map((pin, idx) => {
-                  if (pin.lat === undefined || pin.lng === undefined) return null;
-                  const isSelected = activePinId === pin.id;
-                  return (
-                    <AdvancedMarker
-                      key={pin.id}
-                      position={{ lat: pin.lat, lng: pin.lng }}
-                      onClick={() => setActivePinId(pin.id)}
-                    >
-                      <div className="relative flex items-center justify-center">
-                        <div className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center font-bold font-mono shadow-2xl text-xs transition-all ${
-                          pin.hidden
-                            ? 'bg-slate-700 text-slate-500 opacity-45'
-                            : isSelected 
-                              ? 'bg-cyan-400 text-slate-900 scale-125 ring-4 ring-cyan-400/30 font-black' 
-                              : 'bg-indigo-600 text-white hover:bg-indigo-500'
-                        }`}>
-                          {idx + 1}
-                        </div>
-                      </div>
-                    </AdvancedMarker>
-                  );
-                })}
-              </GoogleMapComponent>
-
-              {/* HUD / Overlay info on map */}
-              <div className="absolute top-4 left-4 bg-slate-950/90 border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-[9px] text-cyan-400 pointer-events-none shadow-xl z-20 flex items-center gap-1.5">
-                <Navigation size={10} className="animate-pulse text-cyan-400" />
-                <span>GOOGLE MAPS INTERACTIVE GPS CANVAS • ACTIVE</span>
-              </div>
-            </div>
-          </APIProvider>
-        ) : (
-          <div className="w-full h-full relative">
-            <OsmInteractiveMap 
-              pins={pins}
-              onMapClick={handleMapClick}
-              onPinClick={(pin) => setActivePinId(pin.id)}
-              activePinId={activePinId}
-            />
-
-            {/* Warning if Google Maps API Key is missing and we fallbacked to OpenStreetMap */}
-            {!hasGoogleKey && (
-              <div className="absolute bottom-4 left-4 right-4 bg-amber-950/95 border border-amber-900/30 p-3 rounded-2xl shadow-2xl flex items-start gap-2.5 max-w-md z-20 text-left">
-                <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={16} />
-                <div className="space-y-1">
-                  <h4 className="text-[11px] font-bold text-amber-300 uppercase tracking-wide">Mode Terpaut OpenStreetMap (No-Key)</h4>
-                  <p className="text-[10px] text-amber-200 leading-relaxed font-sans">
-                    Google Maps Platform API Key belum terkonfigurasi di Secrets. Kami menyediakan OpenStreetMap interaktif sepenuhnya agar Anda tetap bisa mengetuk peta dan meletakkan pin cerita dengan lancar!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="w-full h-full relative">
+          <OsmInteractiveMap 
+            pins={pins}
+            onMapClick={handleMapClick}
+            onPinClick={(pin) => setActivePinId(pin.id)}
+            activePinId={activePinId}
+          />
+        </div>
       </div>
 
     </div>
