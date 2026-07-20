@@ -1,0 +1,6 @@
+{
+  "name": "HistoLab",
+  "description": "Ruang kerja digital (digital workspace) guru sejarah untuk menyiapkan materi, mengelola kelas, mencatat absensi, dan memantau perkembangan nilai siswa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
