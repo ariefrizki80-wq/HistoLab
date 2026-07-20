@@ -24,7 +24,19 @@ export default function App() {
   const isPresentationModeActive = activeView === 'materi' && (currentMateriMode === 'presentation' || currentMateriMode === 'story_editor');
   
   // Mobile responsive state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1280);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1280) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initialize and synchronize with LocalStorage
   useEffect(() => {
@@ -391,202 +403,215 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans flex flex-col md:flex-row relative overflow-hidden">
-
-      {/* MOBILE TOPBAR HEADER */}
-      {!isPresentationModeActive && (
-        <header className="md:hidden bg-[#0F172A] text-white px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-md">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white">H</div>
-            <span className="font-bold text-lg italic tracking-tight">HistoLab</span>
-          </div>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-1 text-slate-400 hover:text-white"
-          >
-            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </header>
-      )}
-
+    <div className="flex h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans overflow-hidden">
       {/* SIDEBAR NAVIGATION (RESPONSIVE) */}
       {!isPresentationModeActive && (
-        <aside className={`fixed md:sticky top-0 bottom-0 left-0 bg-[#0F172A] text-white w-64 p-8 flex flex-col justify-between z-40 transition-transform duration-300 md:translate-x-0 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:h-screen md:flex shrink-0`}>
-          <div className="space-y-4">
-            {/* Logo Brand with Feather Pen Icon */}
-            <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-xl text-white">
-                H
-              </div>
-              <h1 className="font-bold text-2xl tracking-tight italic">HistoLab</h1>
-            </div>
+        <>
+          {/* Overlay for Tablet/Mobile */}
+          {isSidebarOpen && (
+             <div 
+               className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 xl:hidden"
+               onClick={() => setIsSidebarOpen(false)}
+             />
+          )}
 
-            {/* Navigation Links */}
-            <nav className="space-y-2">
-              <button
-                onClick={() => {
-                  setActiveView('dashboard');
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  activeView === 'dashboard'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <LayoutDashboard size={18} />
-                <span>Dashboard</span>
-              </button>
+          {/* Sidebar */}
+          <aside className={`fixed xl:relative top-0 bottom-0 left-0 bg-[#0F172A] text-white flex flex-col justify-between z-50 transition-all duration-300 ease-in-out shrink-0 ${
+            isSidebarOpen ? 'w-64 translate-x-0' : 'w-20 -translate-x-full xl:translate-x-0'
+          }`}>
+             <div className="flex flex-col h-full overflow-hidden">
+                {/* Logo Area */}
+                <div className="flex items-center gap-3 p-5 h-16 shrink-0 border-b border-white/5">
+                   <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-xl text-white shrink-0">
+                      H
+                   </div>
+                   {isSidebarOpen && <h1 className="font-bold text-2xl tracking-tight italic whitespace-nowrap">HistoLab</h1>}
+                </div>
+                
+                {/* Navigation Links */}
+                <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+                  <button
+                    onClick={() => {
+                      setActiveView('dashboard');
+                      if (window.innerWidth < 1280) setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center px-0'} py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      activeView === 'dashboard'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    title="Dashboard"
+                  >
+                    <LayoutDashboard size={isSidebarOpen ? 18 : 22} className="shrink-0" />
+                    {isSidebarOpen && <span className="ml-3 truncate">Dashboard</span>}
+                  </button>
 
-              <button
-                onClick={() => {
-                  if (classes.length > 0 && !selectedClassId) {
-                    setSelectedClassId(classes[0].id);
-                  }
-                  setActiveView('kelas');
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  activeView === 'kelas'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <GraduationCap size={18} />
-                <span>Data Kelas</span>
-              </button>
+                  <button
+                    onClick={() => {
+                      if (classes.length > 0 && !selectedClassId) {
+                        setSelectedClassId(classes[0].id);
+                      }
+                      setActiveView('kelas');
+                      if (window.innerWidth < 1280) setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center px-0'} py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      activeView === 'kelas'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    title="Data Kelas"
+                  >
+                    <GraduationCap size={isSidebarOpen ? 18 : 22} className="shrink-0" />
+                    {isSidebarOpen && <span className="ml-3 truncate">Data Kelas</span>}
+                  </button>
 
-              <button
-                onClick={() => {
-                  setActiveView('materi');
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  activeView === 'materi'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <BookOpen size={18} />
-                <span>Bank Materi</span>
-              </button>
+                  <button
+                    onClick={() => {
+                      setActiveView('materi');
+                      if (window.innerWidth < 1280) setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center px-0'} py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      activeView === 'materi'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    title="Bank Materi"
+                  >
+                    <BookOpen size={isSidebarOpen ? 18 : 22} className="shrink-0" />
+                    {isSidebarOpen && <span className="ml-3 truncate">Bank Materi</span>}
+                  </button>
+                </nav>
 
-              <button
-                onClick={() => {
-                  setActiveView('pengaturan');
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer mt-4 ${
-                  activeView === 'pengaturan'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <SettingsIcon size={18} />
-                <span>Pengaturan</span>
-              </button>
-            </nav>
-          </div>
-
-          {/* Teacher profile details at bottom of Sidebar */}
-          <div className="bg-slate-800/50 p-3 rounded-xl flex items-center gap-3 mt-6">
-            <div className="h-8 w-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              P
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-white truncate">Paijo, S.Pd.</p>
-              <p className="text-[10px] text-slate-400 truncate">Guru Sejarah</p>
-            </div>
-          </div>
-        </aside>
-      )}
-
-      {/* OVERLAY FOR MOBILE SIDEBAR DRAWER */}
-      {!isPresentationModeActive && isSidebarOpen && (
-        <div
-          onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-        />
+                <div className="p-3 border-t border-white/5">
+                  <button
+                    onClick={() => {
+                      setActiveView('pengaturan');
+                      if (window.innerWidth < 1280) setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center px-0'} py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      activeView === 'pengaturan'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    title="Pengaturan"
+                  >
+                    <SettingsIcon size={isSidebarOpen ? 18 : 22} className="shrink-0" />
+                    {isSidebarOpen && <span className="ml-3 truncate">Pengaturan</span>}
+                  </button>
+                </div>
+             </div>
+          </aside>
+        </>
       )}
 
       {/* MAIN VIEW AREA */}
-      <main className={`flex-1 flex flex-col z-10 w-full max-w-[1600px] mx-auto ${
-        isPresentationModeActive 
-          ? 'p-0 gap-0 h-screen overflow-hidden bg-slate-950 max-w-full' 
-          : 'p-6 md:p-8 gap-6 overflow-y-auto h-[calc(100vh-56px)] md:h-screen'
-      }`}>
-        {/* Dynamic header row on desktop */}
-        {!isPresentationModeActive && (
-          <div className="hidden md:flex items-center justify-between mb-2">
-            <div>
-              <h2 className="text-3xl font-bold">Ruang Kerja Digital</h2>
-              <p className="text-slate-500 mt-1">HistoLab – Sistem Ruang Kerja Guru</p>
+      <div className={`flex-1 flex flex-col min-w-0 ${isPresentationModeActive ? 'bg-slate-950' : 'bg-[#F8F9FA]'}`}>
+         
+         {/* TOP HEADER */}
+         {!isPresentationModeActive && (
+           <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 xl:px-8 shrink-0 shadow-sm z-30">
+              <div className="flex items-center gap-4">
+                 <button 
+                   onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                   className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                 >
+                   <Menu size={24} />
+                 </button>
+                 
+                 <div className="hidden sm:block ml-2">
+                   <h2 className="font-bold text-slate-800 text-lg leading-tight">
+                     {activeView === 'dashboard' && 'Dashboard'}
+                     {activeView === 'kelas' && 'Manajemen Kelas'}
+                     {activeView === 'materi' && 'Bank Materi'}
+                     {activeView === 'pengaturan' && 'Pengaturan'}
+                   </h2>
+                   <p className="text-[11px] text-slate-500 font-medium tracking-wide uppercase">
+                     Digital Workspace Guru Sejarah
+                   </p>
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                 <div className="hidden md:flex items-center gap-2 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm">
+                    <Sparkles size={14} className="text-indigo-500" />
+                    <span>Sinkronisasi Aktif</span>
+                 </div>
+                 
+                 <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
+                 
+                 <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveView('pengaturan')}>
+                    <div className="text-right hidden md:block">
+                       <p className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Paijo, S.Pd.</p>
+                       <p className="text-[10px] text-slate-500">SMA N 1 Nusantara</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg shadow-sm border-2 border-white ring-2 ring-transparent group-hover:ring-indigo-200 transition-all">
+                       P
+                    </div>
+                 </div>
+              </div>
+           </header>
+         )}
+         
+         <main className={`flex-1 overflow-y-auto ${isPresentationModeActive ? 'p-0' : 'p-4 xl:p-8'}`}>
+            <div className={`mx-auto w-full h-full ${isPresentationModeActive ? 'max-w-none' : 'max-w-[1600px]'}`}>
+              {/* SUBVIEWS DISPATCH */}
+              {activeView === 'dashboard' && (
+                <DashboardView
+                  classes={classes}
+                  materials={materials}
+                  events={events}
+                  reminders={reminders}
+                  onAddEvent={handleAddEvent}
+                  onDeleteEvent={handleDeleteEvent}
+                  onAddReminder={handleAddReminder}
+                  onToggleReminder={handleToggleReminder}
+                  onDeleteReminder={handleDeleteReminder}
+                  onNavigateToClass={handleNavigateToClass}
+                  onNavigateToMaterial={handleNavigateToMaterial}
+                />
+              )}
+
+              {activeView === 'kelas' && (
+                <KelasView
+                  classes={classes}
+                  selectedClassId={selectedClassId}
+                  onSelectClass={setSelectedClassId}
+                  onAddClass={handleAddClass}
+                  onDeleteClass={handleDeleteClass}
+                  onAddStudent={handleAddStudent}
+                  onUpdateStudent={handleUpdateStudent}
+                  onDeleteStudent={handleDeleteStudent}
+                  onAddMeeting={handleAddMeeting}
+                  onUpdateMeetingAttendance={handleUpdateMeetingAttendance}
+                  onDeleteMeeting={handleDeleteMeeting}
+                  onAddGradeItem={handleAddGradeItem}
+                  onUpdateGrade={handleUpdateGrade}
+                  onDeleteGradeItem={handleDeleteGradeItem}
+                />
+              )}
+
+              {activeView === 'materi' && (
+                <MateriView
+                  classes={classes}
+                  materials={materials}
+                  onAddMaterial={handleAddMaterial}
+                  onUpdateMaterial={handleUpdateMaterial}
+                  onDeleteMaterial={handleDeleteMaterial}
+                  initialMaterialId={materiInitialMaterialId}
+                  initialMode={materiInitialMode}
+                  onClearInitialState={() => {
+                    setMateriInitialMaterialId(null);
+                    setMateriInitialMode(null);
+                  }}
+                  onModeChange={setCurrentMateriMode}
+                />
+              )}
+              {activeView === 'pengaturan' && (
+                <SettingsView />
+              )}
             </div>
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 px-6 py-2.5 rounded-full shadow-sm">
-              <Sparkles size={16} className="text-indigo-500" />
-              <span>Koneksi Stabil</span>
-            </div>
-          </div>
-        )}
-
-        {/* SUBVIEWS DISPATCH */}
-        {activeView === 'dashboard' && (
-          <DashboardView
-            classes={classes}
-            materials={materials}
-            events={events}
-            reminders={reminders}
-            onAddEvent={handleAddEvent}
-            onDeleteEvent={handleDeleteEvent}
-            onAddReminder={handleAddReminder}
-            onToggleReminder={handleToggleReminder}
-            onDeleteReminder={handleDeleteReminder}
-            onNavigateToClass={handleNavigateToClass}
-            onNavigateToMaterial={handleNavigateToMaterial}
-          />
-        )}
-
-        {activeView === 'kelas' && (
-          <KelasView
-            classes={classes}
-            selectedClassId={selectedClassId}
-            onSelectClass={setSelectedClassId}
-            onAddClass={handleAddClass}
-            onDeleteClass={handleDeleteClass}
-            onAddStudent={handleAddStudent}
-            onUpdateStudent={handleUpdateStudent}
-            onDeleteStudent={handleDeleteStudent}
-            onAddMeeting={handleAddMeeting}
-            onUpdateMeetingAttendance={handleUpdateMeetingAttendance}
-            onDeleteMeeting={handleDeleteMeeting}
-            onAddGradeItem={handleAddGradeItem}
-            onUpdateGrade={handleUpdateGrade}
-            onDeleteGradeItem={handleDeleteGradeItem}
-          />
-        )}
-
-        {activeView === 'materi' && (
-          <MateriView
-            classes={classes}
-            materials={materials}
-            onAddMaterial={handleAddMaterial}
-            onUpdateMaterial={handleUpdateMaterial}
-            onDeleteMaterial={handleDeleteMaterial}
-            initialMaterialId={materiInitialMaterialId}
-            initialMode={materiInitialMode}
-            onClearInitialState={() => {
-              setMateriInitialMaterialId(null);
-              setMateriInitialMode(null);
-            }}
-            onModeChange={setCurrentMateriMode}
-          />
-        )}
-        {activeView === 'pengaturan' && (
-          <SettingsView />
-        )}
-      </main>
+         </main>
+      </div>
     </div>
   );
 }
