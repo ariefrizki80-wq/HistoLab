@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   ZoomIn, ZoomOut, Move, MapPin, Trash, Plus, Check, X,
-  Play, Pause, SkipForward, SkipBack, MousePointer, Info, RotateCcw, HelpCircle, Compass, Globe, Map
+  Play, Pause, SkipForward, SkipBack, MousePointer, Info, RotateCcw, HelpCircle, Compass, Globe, Map, Folder
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HistoricalMap, MapPin as PinType } from '../types';
+import AssetPickerModal from './AssetPickerModal';
 
 // ==========================================
 // 1. PROCEDURAL BACKGROUND GENERATOR COMPONENT
@@ -935,6 +936,7 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
   const [pins, setPins] = useState<PinType[]>(mapItem.pins || []);
 
   const [useGeographicMap, setUseGeographicMap] = useState<boolean>(true); // Force-enabled for OpenStreetMap GIS
+  const [isAssetPickerOpen, setIsAssetPickerOpen] = useState<boolean>(false);
 
   // Zoom / Pan state inside editor canvas (only used for non-geographic custom maps)
   const [zoom, setZoom] = useState(1);
@@ -1160,15 +1162,20 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
               </div>
 
               {!useGeographicMap && (
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">URL Gambar Khusus (Opsional)</label>
-                  <input 
-                    type="text"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Link gambar backdrop peta..."
-                    className="w-full p-2 border border-slate-200 rounded-xl bg-white text-xs outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 font-mono"
-                  />
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gambar Peta Sejarah:</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAssetPickerOpen(true)}
+                    className="w-full px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Folder size={14} /> Pilih Peta dari Asset Library
+                  </button>
+                  {imageUrl && (
+                    <div className="relative w-full h-20 rounded-xl overflow-hidden border border-slate-200 mt-1">
+                      <img src={imageUrl} alt="Peta backdrop preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -1519,6 +1526,15 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
         </div>
 
       </div>
+
+      <AssetPickerModal
+        isOpen={isAssetPickerOpen}
+        onClose={() => setIsAssetPickerOpen(false)}
+        category="map"
+        onSelectAsset={(asset) => {
+          setImageUrl(asset.dataUrl);
+        }}
+      />
     </div>
   );
 }

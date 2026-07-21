@@ -7,7 +7,7 @@ import {
   Quote, Sparkles, BookOpen, Clock, Map as MapIcon, Compass, Sliders, ChevronRight, 
   MapPin as MapPinIcon, Info, Eye, EyeOff, Save, Undo, Redo, ChevronLeft, ChevronRight as ChevronRightIcon, 
   Menu, X, CheckCircle2, AlertCircle, LayoutGrid, Layers, Tv, HelpCircle, Calendar, PlusCircle,
-  Square, Circle, Minus, MousePointer2, AlignHorizontalSpaceAround, AlignVerticalSpaceAround
+  Square, Circle, Minus, MousePointer2, AlignHorizontalSpaceAround, AlignVerticalSpaceAround, Folder
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,6 +15,7 @@ import { MapBackground, GeographicOpenStreetMap } from './HistoricalMapEngine';
 import MapFocusMode from './MapFocusMode';
 import { SlideRenderer } from './SlideRenderer';
 import { INITIAL_PRESENTATIONS, PRESENTATION_TEMPLATES } from '../data/initialPresentations';
+import AssetPickerModal from './AssetPickerModal';
 
 export default function SlideBuilder() {
   // Global presentations state
@@ -34,6 +35,10 @@ export default function SlideBuilder() {
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(true);
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(true);
   const [activeInspectorTab, setActiveInspectorTab] = useState<'slide' | 'element' | 'data'>('slide');
+  
+  // Asset Library Picker State
+  const [isAssetPickerOpen, setIsAssetPickerOpen] = useState(false);
+  const [assetPickerTarget, setAssetPickerTarget] = useState<'slide_bg' | 'media_element'>('slide_bg');
   
   // Interactive present mode state
   const [isPresenting, setIsPresenting] = useState(false);
@@ -1203,15 +1208,23 @@ export default function SlideBuilder() {
 
                       {(activeScene.backgroundType === 'image' || activeScene.backgroundType === 'pattern' || activeScene.backgroundType === 'texture') && (
                         <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">URL Aset:</label>
-                            <input
-                              type="text"
-                              placeholder="https://..."
-                              value={activeScene.backgroundValue || ''}
-                              onChange={(e) => handleUpdateSceneMeta({ backgroundValue: e.target.value })}
-                              className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
-                            />
+                          <div className="space-y-1.5">
+                            <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">Media Latar Belakang:</label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAssetPickerTarget('slide_bg');
+                                setIsAssetPickerOpen(true);
+                              }}
+                              className="w-full px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Folder size={14} /> Pilih dari Asset Library
+                            </button>
+                            {activeScene.backgroundValue && (
+                              <div className="relative w-full h-20 rounded-lg overflow-hidden border border-slate-800 mt-2">
+                                <img src={activeScene.backgroundValue} alt="Background preview" className="w-full h-full object-cover" />
+                              </div>
+                            )}
                           </div>
 
                           <div className="space-y-1">
@@ -1325,16 +1338,36 @@ export default function SlideBuilder() {
                     
                     {selectedMediaItem ? (
                       <div className="space-y-4">
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">
-                            {selectedMediaItem.type === 'image' ? 'URL Gambar:' : 'Konten / Teks:'}
+                            {selectedMediaItem.type === 'image' ? 'Gambar Elemen:' : 'Konten / Teks:'}
                           </label>
-                          <textarea
-                            value={selectedMediaItem.content}
-                            onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { content: e.target.value })}
-                            rows={3}
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none focus:border-indigo-500 resize-none font-serif"
-                          />
+                          {selectedMediaItem.type === 'image' ? (
+                            <div className="space-y-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssetPickerTarget('media_element');
+                                  setIsAssetPickerOpen(true);
+                                }}
+                                className="w-full px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <Folder size={14} /> Pilih dari Asset Library
+                              </button>
+                              {selectedMediaItem.content && (
+                                <div className="relative w-full h-24 rounded-lg overflow-hidden border border-slate-800">
+                                  <img src={selectedMediaItem.content} alt="Element preview" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <textarea
+                              value={selectedMediaItem.content}
+                              onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { content: e.target.value })}
+                              rows={3}
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none focus:border-indigo-500 resize-none font-serif"
+                            />
+                          )}
                         </div>
 
                         {selectedMediaItem.type === 'image' && (
@@ -2199,6 +2232,18 @@ export default function SlideBuilder() {
         </div>
       )}
 
+      <AssetPickerModal
+        isOpen={isAssetPickerOpen}
+        onClose={() => setIsAssetPickerOpen(false)}
+        category={assetPickerTarget === 'slide_bg' ? 'background' : 'materi'}
+        onSelectAsset={(asset) => {
+          if (assetPickerTarget === 'slide_bg') {
+            handleUpdateSceneMeta({ backgroundValue: asset.dataUrl });
+          } else if (assetPickerTarget === 'media_element' && selectedMediaItemId) {
+            handleUpdateMediaItem(selectedMediaItemId, { content: asset.dataUrl });
+          }
+        }}
+      />
     </div>
   );
 }

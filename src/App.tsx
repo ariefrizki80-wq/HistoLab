@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import SettingsView from './components/SettingsView';
-import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles, Tv, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles, Tv, Settings as SettingsIcon, Mic, MessageSquare, Folder } from 'lucide-react';
 import { ClassItem, Material, CalendarEvent, ReminderNote, Student, Meeting, GradeItem, AttendanceStatus } from './types';
 import { INITIAL_CLASSES, INITIAL_MATERIALS, INITIAL_CALENDAR_EVENTS, INITIAL_REMINDERS } from './data/initialData';
 import DashboardView from './components/DashboardView';
 import KelasView from './components/KelasView';
 import MateriView from './components/MateriView';
 import SlideBuilder from './components/SlideBuilder';
+import { useAI } from './context/AIContext';
+import AIChatDrawer from './components/AIChatDrawer';
+import AIVoiceOverlay from './components/AIVoiceOverlay';
+import AssetPickerModal from './components/AssetPickerModal';
 
 export default function App() {
   // Global states
@@ -21,6 +25,36 @@ export default function App() {
   const [materiInitialMaterialId, setMateriInitialMaterialId] = useState<string | null>(null);
   const [materiInitialMode, setMateriInitialMode] = useState<'view' | 'edit' | 'create' | null>(null);
   const [currentMateriMode, setCurrentMateriMode] = useState<'view' | 'edit' | 'create'>('view');
+
+  // AI Platform Integration
+  const { setAppContext, setIsVoiceOverlayOpen, registerToolHandler } = useAI();
+  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [isGlobalAssetPickerOpen, setIsGlobalAssetPickerOpen] = useState(false);
+
+  // Sync Active View to AI AppContext
+  useEffect(() => {
+    setAppContext((prev) => ({
+      ...prev,
+      activeView,
+    }));
+  }, [activeView, setAppContext]);
+
+  // Register AI function execution handlers
+  useEffect(() => {
+    registerToolHandler((name: string, args: any) => {
+      if (name === 'navigateView' && args.view) {
+        if (['dashboard', 'kelas', 'materi', 'presentasi', 'pengaturan'].includes(args.view)) {
+          setActiveView(args.view);
+        }
+      } else if (name === 'openMaterial' && args.materialId) {
+        setMateriInitialMaterialId(args.materialId);
+        setActiveView('materi');
+      } else if (name === 'openClass' && args.classId) {
+        setSelectedClassId(args.classId);
+        setActiveView('kelas');
+      }
+    });
+  }, [registerToolHandler, setAppContext]);
   
   const isPresentationModeActive = false;
   
@@ -576,12 +610,34 @@ export default function App() {
                  </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                 <div className="hidden md:flex items-center gap-2 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm">
-                    <Sparkles size={14} className="text-indigo-500" />
-                    <span>Sinkronisasi Aktif</span>
-                 </div>
-                 
+              <div className="flex items-center gap-3">
+                 <button
+                   onClick={() => setIsGlobalAssetPickerOpen(true)}
+                   className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                   title="Buka Asset Library HistoLab"
+                 >
+                   <Folder size={16} className="text-amber-600" />
+                   <span className="hidden lg:inline">Asset Library</span>
+                 </button>
+
+                 <button
+                   onClick={() => setIsVoiceOverlayOpen(true)}
+                   className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-amber-500/30"
+                   title="Buka HistoLab Voice Mode"
+                 >
+                   <Mic size={16} className="text-amber-500" />
+                   <span className="hidden md:inline">Voice Mode</span>
+                 </button>
+
+                 <button
+                   onClick={() => setIsChatDrawerOpen(true)}
+                   className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                   title="Buka AI Assistant"
+                 >
+                   <Sparkles size={16} />
+                   <span className="hidden sm:inline">AI Assistant</span>
+                 </button>
+
                  <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
                  
                  <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveView('pengaturan')}>
@@ -661,6 +717,36 @@ export default function App() {
             </div>
          </main>
       </div>
+
+      {/* Floating AI Assistant Trigger (Bottom Right) */}
+      {!isPresentationModeActive && (
+        <div className="fixed bottom-6 right-6 z-[9000] flex flex-col items-end gap-3">
+          <button
+            onClick={() => setIsChatDrawerOpen(true)}
+            className="p-4 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 text-slate-950 shadow-2xl hover:scale-105 transition-all flex items-center justify-center group ring-4 ring-amber-500/20"
+            title="Buka AI Assistant HistoLab"
+          >
+            <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
+          </button>
+        </div>
+      )}
+
+      {/* AI Modals & Drawers */}
+      <AIChatDrawer
+        isOpen={isChatDrawerOpen}
+        onClose={() => setIsChatDrawerOpen(false)}
+        onOpenAssetPicker={() => setIsGlobalAssetPickerOpen(true)}
+      />
+
+      <AIVoiceOverlay
+        onSwitchToChat={() => setIsChatDrawerOpen(true)}
+      />
+
+      <AssetPickerModal
+        isOpen={isGlobalAssetPickerOpen}
+        onClose={() => setIsGlobalAssetPickerOpen(false)}
+        category="all"
+      />
     </div>
   );
 }

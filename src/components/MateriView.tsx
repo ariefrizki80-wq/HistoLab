@@ -4,11 +4,12 @@ import {
   Presentation, Sliders, ArrowLeft, ArrowRight, BookOpen, 
   ChevronDown, ChevronUp, Layers, Minimize2, ExternalLink, 
   FileText, CheckCircle2, Focus, Eye, Target, MapPin,
-  Copy, Settings, Type, Image, Quote, ArrowUp, ArrowDown, Tv, Upload, X
+  Copy, Settings, Type, Image, Quote, ArrowUp, ArrowDown, Tv, Upload, X, Folder
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Material, ClassItem, TimelineEvent, HistoricalMap } from '../types';
 import { HistoricalMapViewer, HistoricalMapEditor, MapBackground } from './HistoricalMapEngine';
+import AssetPickerModal from './AssetPickerModal';
 
 interface MateriViewProps {
   classes: ClassItem[];
@@ -66,6 +67,10 @@ export default function MateriView({
   // Presentation Engine States
   const [activeTimelineIndex, setActiveTimelineIndex] = useState<number>(0);
   const [activeSubMaterialId, setActiveSubMaterialId] = useState<string | null>(null);
+
+  // Asset Library Picker State
+  const [isAssetPickerOpen, setIsAssetPickerOpen] = useState(false);
+  const [assetPickerTarget, setAssetPickerTarget] = useState<'material_image' | { type: 'map_image'; mapIndex: number }>('material_image');
 
   // Interactive Map States
   const [editingMapIndex, setEditingMapIndex] = useState<number | null>(null);
@@ -393,7 +398,19 @@ export default function MateriView({
             {/* Multimedia Image Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200">
               <div>
-                <label className="block text-slate-700 mb-1.5">Gambar Pendukung Topik</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-slate-700 font-medium">Gambar Pendukung Topik</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssetPickerTarget('material_image');
+                      setIsAssetPickerOpen(true);
+                    }}
+                    className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Folder size={13} /> Asset Library
+                  </button>
+                </div>
                 {!formImageUrl ? (
                   <div
                     onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
@@ -1042,6 +1059,19 @@ export default function MateriView({
           />
         )}
       </AnimatePresence>
+
+      <AssetPickerModal
+        isOpen={isAssetPickerOpen}
+        onClose={() => setIsAssetPickerOpen(false)}
+        category={assetPickerTarget === 'material_image' ? 'materi' : 'map'}
+        onSelectAsset={(asset) => {
+          if (assetPickerTarget === 'material_image') {
+            setFormImageUrl(asset.dataUrl);
+          } else if (typeof assetPickerTarget === 'object' && assetPickerTarget.type === 'map_image') {
+            updateFormMap(assetPickerTarget.mapIndex, 'imageUrl', asset.dataUrl);
+          }
+        }}
+      />
     </div>
   );
 }
