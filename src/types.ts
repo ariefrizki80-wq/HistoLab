@@ -38,11 +38,16 @@ export interface MapPin {
   id: string;
   label: string;
   description?: string;
-  x: number; // percentage position 0 to 100 (for static visual maps)
+  x: number; // percentage position 0 to 105 (for static visual maps)
   y: number; // percentage position 0 to 100 (for static visual maps)
   lat?: number; // Real latitude (for real map providers)
   lng?: number; // Real longitude (for real map providers)
   hidden?: boolean; // Toggle on/off
+  imageUrl?: string;
+  videoUrl?: string;
+  audioUrl?: string;
+  timelinePeriod?: string;
+  keyFacts?: string[];
 }
 
 export interface HistoricalMap {
@@ -55,7 +60,7 @@ export interface HistoricalMap {
   pins?: MapPin[];
   showRoute?: boolean;
   useGeographicMap?: boolean; // Whether to use real GIS maps instead of custom images
-  mapProvider?: 'openstreetmap' | 'googlemaps'; // Selected provider
+  mapProvider?: 'openstreetmap'; // Selected provider
   mapCenterLat?: number; // Center coordinate
   mapCenterLng?: number; // Center coordinate
   mapZoom?: number; // Map zoom level
@@ -111,6 +116,17 @@ export interface Material {
   timeline?: TimelineEvent[];
   maps?: HistoricalMap[];
   storyScenes?: StoryScene[];
+}
+
+export interface Presentation {
+  id: string;
+  title: string;
+  description: string;
+  theme?: string; // 'dark_slate' | 'parchment' | 'modern'
+  scenes: StoryScene[];
+  timeline?: TimelineEvent[]; // Self-contained timeline for timeline slides
+  maps?: HistoricalMap[];     // Self-contained maps for map slides
+  createdAt: string;
 }
 
 export interface ClassItem {

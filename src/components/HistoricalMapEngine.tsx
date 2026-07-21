@@ -364,6 +364,7 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
 
   const pins = mapItem.pins || [];
   const theme = mapItem.mapStyle || 'vintage';
+  const useGeographicMap = true; // Force-enabled for real-time GIS OpenStreetMap
 
   // Keyboard navigation for zoom
   useEffect(() => {
@@ -621,7 +622,7 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
         <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center pointer-events-none">
           {/* Zoom & View Indicators */}
           <div className="flex items-center gap-2 bg-slate-950/80 backdrop-blur-md p-2 rounded-xl border border-slate-800 text-xs text-slate-300 pointer-events-auto shadow-xl">
-            {!mapItem.useGeographicMap ? (
+            {!useGeographicMap ? (
               <>
                 <span className="font-mono px-2 py-0.5 bg-slate-900 rounded-md font-bold text-[#06B6D4]">
                   {Math.round(zoom * 100)}% Zoom
@@ -657,13 +658,13 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
         {/* Interactive Map Viewport Container */}
         <div 
           ref={containerRef}
-          onMouseDown={mapItem.useGeographicMap ? undefined : handleMouseDown}
-          onMouseMove={mapItem.useGeographicMap ? undefined : handleMouseMove}
-          onMouseUp={mapItem.useGeographicMap ? undefined : handleMouseUp}
-          onMouseLeave={mapItem.useGeographicMap ? undefined : handleMouseUp}
-          className={`flex-1 w-full h-full overflow-hidden relative ${mapItem.useGeographicMap ? '' : (isDragging ? 'cursor-grabbing' : 'cursor-grab')}`}
+          onMouseDown={useGeographicMap ? undefined : handleMouseDown}
+          onMouseMove={useGeographicMap ? undefined : handleMouseMove}
+          onMouseUp={useGeographicMap ? undefined : handleMouseUp}
+          onMouseLeave={useGeographicMap ? undefined : handleMouseUp}
+          className={`flex-1 w-full h-full overflow-hidden relative ${useGeographicMap ? '' : (isDragging ? 'cursor-grabbing' : 'cursor-grab')}`}
         >
-          {mapItem.useGeographicMap ? (
+          {useGeographicMap ? (
             <GeographicOpenStreetMap
               pins={pins}
               showRoute={mapItem.showRoute}
@@ -784,13 +785,13 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
 
                 <div className="mt-4 flex items-center justify-between text-[10px] opacity-60 font-mono border-t border-slate-500/10 pt-3">
                   <span>
-                    {mapItem.useGeographicMap 
+                    {useGeographicMap 
                       ? `Koordinat: Lat=${activePin.lat !== undefined ? activePin.lat : '?'}, Lng=${activePin.lng !== undefined ? activePin.lng : '?'}`
                       : `Sumbu Koordinat: X=${activePin.x}%, Y=${activePin.y}%`}
                   </span>
                   <span className="flex items-center gap-1">
                     <Info size={11} /> 
-                    {mapItem.useGeographicMap 
+                    {useGeographicMap 
                       ? 'Seret / cubit peta untuk eksplorasi dinamis'
                       : 'Klik seret untuk geser, atau gunakan kontrol zoom'}
                   </span>
@@ -844,7 +845,7 @@ export function HistoricalMapViewer({ mapItem, onClose }: HistoricalMapViewerPro
           </div>
 
           {/* Map zoom controls */}
-          {!mapItem.useGeographicMap ? (
+          {!useGeographicMap ? (
             <div className="flex items-center gap-4 text-xs font-mono">
               <span className="text-slate-500 hidden sm:inline">Kontrol Zoom Spasial:</span>
               <div className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-xl border border-slate-800">
@@ -933,7 +934,7 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
   const [showRoute, setShowRoute] = useState(mapItem.showRoute !== undefined ? mapItem.showRoute : true);
   const [pins, setPins] = useState<PinType[]>(mapItem.pins || []);
 
-  const [useGeographicMap, setUseGeographicMap] = useState<boolean>(mapItem.useGeographicMap || false);
+  const [useGeographicMap, setUseGeographicMap] = useState<boolean>(true); // Force-enabled for OpenStreetMap GIS
 
   // Zoom / Pan state inside editor canvas (only used for non-geographic custom maps)
   const [zoom, setZoom] = useState(1);
@@ -1121,13 +1122,13 @@ export function HistoricalMapEditor({ mapItem, onSave, onClose }: HistoricalMapE
                   <input 
                     type="checkbox" 
                     id="chk-use-geo" 
-                    checked={useGeographicMap}
-                    onChange={(e) => setUseGeographicMap(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500 cursor-pointer"
+                    checked={true}
+                    disabled={true}
+                    className="w-4 h-4 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500 cursor-not-allowed"
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 leading-normal">
-                  Gunakan peta bumi realistik interaktif (OpenStreetMap) untuk menempatkan titik pinpoint berdasarkan koordinat asli Bumi.
+                  Sistem dikonfigurasi untuk hanya menggunakan peta bumi realistik interaktif (OpenStreetMap) berdasarkan koordinat asli Bumi.
                 </p>
               </div>
 

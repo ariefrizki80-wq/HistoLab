@@ -7,10 +7,8 @@ import {
   Copy, Settings, Type, Image, Quote, ArrowUp, ArrowDown, Tv, Upload, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Material, ClassItem, TimelineEvent, HistoricalMap, StoryScene, StoryMediaItem } from '../types';
+import { Material, ClassItem, TimelineEvent, HistoricalMap } from '../types';
 import { HistoricalMapViewer, HistoricalMapEditor, MapBackground } from './HistoricalMapEngine';
-import { StorytellingPresentation } from './StorytellingPresentation';
-import { StorytellingDesigner } from './StorytellingDesigner';
 
 interface MateriViewProps {
   classes: ClassItem[];
@@ -19,156 +17,12 @@ interface MateriViewProps {
   onUpdateMaterial: (id: string, material: Partial<Material>) => void;
   onDeleteMaterial: (id: string) => void;
   initialMaterialId?: string | null;
-  initialMode?: 'view' | 'edit' | 'create' | 'presentation' | null;
+  initialMode?: 'view' | 'edit' | 'create' | null;
   onClearInitialState?: () => void;
-  onModeChange?: (mode: 'view' | 'edit' | 'create' | 'presentation' | 'story_editor') => void;
+  onModeChange?: (mode: 'view' | 'edit' | 'create') => void;
 }
 
-const getInitialStoryScenes = (material: Material): StoryScene[] => {
-  if (material.storyScenes && material.storyScenes.length > 0) {
-    return material.storyScenes;
-  }
-
-  const scenes: StoryScene[] = [];
-
-  // 1. Cover Scene
-  scenes.push({
-    id: `scene-cover-${Date.now()}`,
-    type: 'cover',
-    title: 'Halaman Judul',
-    narration: material.subtitle || 'Pembelajaran Sejarah Interaktif',
-    backgroundType: 'dark_slate',
-    backgroundValue: 'from-slate-900 via-slate-950 to-indigo-950',
-    mediaItems: [
-      {
-        id: `med-cover-title-${Date.now()}`,
-        type: 'title',
-        content: material.title,
-        x: 10, y: 25, w: 80, h: 22,
-        fontSize: 32,
-        textColor: '#ffffff',
-        rotate: 0
-      },
-      {
-        id: `med-cover-sub-${Date.now()}`,
-        type: 'text',
-        content: material.subtitle || 'Ketuk untuk mulai menelusuri sejarah.',
-        x: 15, y: 50, w: 70, h: 15,
-        fontSize: 18,
-        textColor: '#F59E0B',
-        rotate: 0
-      },
-      {
-        id: `med-cover-bab-${Date.now()}`,
-        type: 'quote',
-        content: material.bab || 'Materi Sejarah',
-        x: 35, y: 72, w: 30, h: 10,
-        fontSize: 12,
-        textColor: '#94A3B8',
-        rotate: 0
-      }
-    ]
-  });
-
-  // 2. Narrative Scene
-  scenes.push({
-    id: `scene-intro-${Date.now()}`,
-    type: 'narrative',
-    title: 'Pengantar Cerita',
-    narration: material.content,
-    backgroundType: 'parchment',
-    backgroundValue: 'bg-amber-50/95 text-slate-900',
-    mediaItems: [
-      {
-        id: `med-narr-content-${Date.now()}`,
-        type: 'quote',
-        content: material.content || 'Tambahkan paragraf narasi pengantar cerita sejarah di sini...',
-        x: 10, y: 20, w: 50, h: 60,
-        fontSize: 15,
-        textColor: '#1E293B',
-        rotate: 0
-      },
-      ...(material.imageUrl ? [{
-        id: `med-narr-img-${Date.now()}`,
-        type: 'image' as const,
-        content: material.imageUrl,
-        x: 65, y: 20, w: 25, h: 45,
-        rotate: 2,
-        label: material.imageCaption || 'Ilustrasi Peristiwa'
-      }] : [])
-    ]
-  });
-
-  // 3. Timeline Scene (if timeline exists)
-  if (material.timeline && material.timeline.length > 0) {
-    scenes.push({
-      id: `scene-timeline-${Date.now()}`,
-      type: 'timeline',
-      title: 'Linimasa Peristiwa',
-      narration: 'Gunakan tombol arah untuk melintasi linimasa kronologis.',
-      backgroundType: 'dark_slate',
-      backgroundValue: 'from-slate-950 to-slate-900',
-      activeTimelineIndex: 0,
-      mediaItems: []
-    });
-  }
-
-  // 4. Map Scene (if maps exist)
-  if (material.maps && material.maps.length > 0) {
-    material.maps.forEach((m, mIdx) => {
-      scenes.push({
-        id: `scene-map-${mIdx}-${Date.now()}`,
-        type: 'map',
-        title: `Peta: ${m.name}`,
-        narration: m.description,
-        backgroundType: 'dark_slate',
-        backgroundValue: m.mapStyle || 'vintage',
-        activeMapId: m.id,
-        activeMapStepIndex: 0,
-        mediaItems: []
-      });
-    });
-  }
-
-  // 5. Reflection Scene
-  scenes.push({
-    id: `scene-reflection-${Date.now()}`,
-    type: 'reflection',
-    title: 'Refleksi Sejarah',
-    narration: 'Mari diskusikan hikmah moral yang bisa kita ambil dari peristiwa ini.',
-    backgroundType: 'dark_slate',
-    backgroundValue: 'from-slate-950 via-slate-900 to-slate-950',
-    mediaItems: [
-      {
-        id: `med-refl-title-${Date.now()}`,
-        type: 'title',
-        content: 'Refleksi Sejarah',
-        x: 10, y: 15, w: 80, h: 15,
-        fontSize: 28,
-        textColor: '#ffffff'
-      },
-      {
-        id: `med-refl-quote-${Date.now()}`,
-        type: 'quote',
-        content: '“Sejarah tidak hanya memberitahu kita apa yang terjadi, tetapi juga membimbing kita tentang siapa kita dan bagaimana seharusnya kita bertindak.”',
-        x: 15, y: 35, w: 70, h: 30,
-        fontSize: 18,
-        textColor: '#F59E0B',
-        rotate: -1
-      },
-      {
-        id: `med-refl-text-${Date.now()}`,
-        type: 'text',
-        content: 'Pelajaran moral apa yang paling berkesan dari materi hari ini untuk kehidupan modern?',
-        x: 20, y: 70, w: 60, h: 15,
-        fontSize: 14,
-        textColor: '#E2E8F0'
-      }
-    ]
-  });
-
-  return scenes;
-};
+// Legacy storytelling story scenes setup removed.
 
 export default function MateriView({
   classes,
@@ -185,38 +39,16 @@ export default function MateriView({
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [activeMaterialId, setActiveMaterialId] = useState<string>(materials[0]?.id || '');
   
-  // Mode: 'view' | 'edit' | 'create' | 'presentation' | 'story_editor'
-  const [mode, setMode] = useState<'view' | 'edit' | 'create' | 'presentation' | 'story_editor'>('view');
+  // Mode: 'view' | 'edit' | 'create'
+  const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view');
 
   // Trigger onModeChange callback on mode change
   useEffect(() => {
     onModeChange?.(mode);
   }, [mode, onModeChange]);
 
-  // Storytelling Presentation & Designer States
-  const [activeSceneIndex, setActiveSceneIndex] = useState<number>(0);
-  const [localScenes, setLocalScenes] = useState<StoryScene[]>([]);
-  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
-  const [selectedMediaItemId, setSelectedMediaItemId] = useState<string | null>(null);
-  const [mapWalkIndex, setMapWalkIndex] = useState<number>(0);
-  const [quizRevealed, setQuizRevealed] = useState<boolean>(false);
-  const [isEditingTextInline, setIsEditingTextInline] = useState<boolean>(false);
-  const [inlineEditText, setInlineEditText] = useState<string>('');
-
   // Selected Material
   const activeMaterial = materials.find(m => m.id === activeMaterialId) || materials[0];
-
-  // Sync Local Scenes when activeMaterial loads
-  useEffect(() => {
-    if (activeMaterial) {
-      if (activeMaterial.storyScenes && activeMaterial.storyScenes.length > 0) {
-        setLocalScenes(activeMaterial.storyScenes);
-      } else {
-        const initial = getInitialStoryScenes(activeMaterial);
-        setLocalScenes(initial);
-      }
-    }
-  }, [activeMaterialId, activeMaterial]);
 
   // Sync with initial props if triggered externally (e.g. from Dashboard)
   useEffect(() => {
@@ -224,119 +56,20 @@ export default function MateriView({
       setActiveMaterialId(initialMaterialId);
     }
     if (initialMode) {
-      if (initialMode === 'presentation') {
-        setMode('presentation');
-        setActiveSceneIndex(0);
-        setMapWalkIndex(0);
-        setQuizRevealed(false);
-      } else {
-        setMode(initialMode as any);
-      }
+      setMode(initialMode);
     }
     if (initialMaterialId || initialMode) {
       onClearInitialState?.();
     }
   }, [initialMaterialId, initialMode, onClearInitialState]);
 
-  // Presentation Mode slide index (deprecated fallback)
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-
   // Presentation Engine States
-  const [presentationStage, setPresentationStage] = useState<'cover' | 'timeline'>('cover');
   const [activeTimelineIndex, setActiveTimelineIndex] = useState<number>(0);
   const [activeSubMaterialId, setActiveSubMaterialId] = useState<string | null>(null);
-  const [showMapsOverlay, setShowMapsOverlay] = useState<boolean>(false);
-  const [showSectionsOverlay, setShowSectionsOverlay] = useState<boolean>(false);
-  const [isFocusing, setIsFocusing] = useState<boolean>(false);
 
   // Interactive Map States
   const [editingMapIndex, setEditingMapIndex] = useState<number | null>(null);
   const [projectedMap, setProjectedMap] = useState<HistoricalMap | null>(null);
-
-  // Trigger camera focus zoom effect when timeline node or presentation stage changes
-  useEffect(() => {
-    if (mode === 'presentation' && presentationStage === 'timeline') {
-      setIsFocusing(true);
-      const timer = setTimeout(() => setIsFocusing(false), 950);
-      return () => clearTimeout(timer);
-    }
-  }, [activeTimelineIndex, presentationStage, mode]);
-
-  // Keyboard navigation for presentation mode
-  useEffect(() => {
-    if (mode !== 'presentation') return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMode('view');
-      } else if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        const currentScene = localScenes[activeSceneIndex];
-        
-        // If map scene has walking steps and we haven't reached the end, step map pin!
-        if (currentScene?.type === 'map' && currentScene.activeMapId) {
-          const linkedMap = activeMaterial.maps?.find(m => m.id === currentScene.activeMapId);
-          const maxSteps = linkedMap?.pins?.length || 0;
-          if (mapWalkIndex < maxSteps - 1) {
-            setMapWalkIndex(prev => prev + 1);
-            return;
-          }
-        }
-
-        // If timeline scene, step through years
-        if (currentScene?.type === 'timeline') {
-          if (activeTimelineIndex < (activeMaterial.timeline?.length || 1) - 1) {
-            setActiveTimelineIndex(prev => prev + 1);
-            setActiveSubMaterialId(null);
-            return;
-          }
-        }
-        
-        // Otherwise, move to next scene
-        if (activeSceneIndex < localScenes.length - 1) {
-          setActiveSceneIndex(prev => prev + 1);
-          setMapWalkIndex(0);
-          setActiveTimelineIndex(0);
-          setQuizRevealed(false);
-        }
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        const currentScene = localScenes[activeSceneIndex];
-        
-        // If map scene has walking steps and we aren't at the first pin, go back in pins!
-        if (currentScene?.type === 'map' && currentScene.activeMapId && mapWalkIndex > 0) {
-          setMapWalkIndex(prev => prev - 1);
-          return;
-        }
-
-        // If timeline scene, step back in years
-        if (currentScene?.type === 'timeline' && activeTimelineIndex > 0) {
-          setActiveTimelineIndex(prev => prev - 1);
-          setActiveSubMaterialId(null);
-          return;
-        }
-
-        // Otherwise, move to previous scene
-        if (activeSceneIndex > 0) {
-          setActiveSceneIndex(prev => prev - 1);
-          setQuizRevealed(false);
-          const prevScene = localScenes[activeSceneIndex - 1];
-          if (prevScene?.type === 'map' && prevScene.activeMapId) {
-            const linkedMap = activeMaterial.maps?.find(m => m.id === prevScene.activeMapId);
-            setMapWalkIndex(Math.max(0, (linkedMap?.pins?.length || 1) - 1));
-          } else if (prevScene?.type === 'timeline') {
-            setActiveTimelineIndex(Math.max(0, (activeMaterial.timeline?.length || 1) - 1));
-          } else {
-            setMapWalkIndex(0);
-            setActiveTimelineIndex(0);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, activeSceneIndex, localScenes, mapWalkIndex, activeTimelineIndex, activeMaterial]);
 
   // Form states for Create/Edit
   const [formBab, setFormBab] = useState('BAB I');
@@ -358,199 +91,7 @@ export default function MateriView({
     { name: '', description: '', era: '', imageUrl: '', mapStyle: 'vintage', pins: [], showRoute: true }
   ]);
 
-  // Storytelling Visual Editor Handlers
-  const handleAddScene = (type: StoryScene['type']) => {
-    const newScene: StoryScene = {
-      id: `scene-${Date.now()}`,
-      type,
-      title: type === 'cover' ? 'Halaman Judul Baru' : type === 'narrative' ? 'Narasi Baru' : type === 'quiz' ? 'Kuis Baru' : type === 'reflection' ? 'Refleksi Baru' : 'Scene Baru',
-      narration: '',
-      backgroundType: type === 'narrative' ? 'parchment' : 'dark_slate',
-      backgroundValue: type === 'narrative' ? 'bg-amber-50/95 text-slate-900' : 'from-slate-900 via-slate-950 to-indigo-950',
-      mediaItems: type === 'quiz' ? [
-        {
-          id: `med-quiz-q-${Date.now()}`,
-          type: 'title',
-          content: 'Pertanyaan Kuis Sejarah?',
-          x: 10, y: 15, w: 80, h: 15,
-          fontSize: 24,
-          textColor: '#ffffff'
-        },
-        {
-          id: `med-quiz-opts-${Date.now()}`,
-          type: 'text',
-          content: 'A. Pilihan Satu\nB. Pilihan Dua\nC. Pilihan Tiga\nD. Pilihan Empat',
-          x: 10, y: 35, w: 80, h: 30,
-          fontSize: 16,
-          textColor: '#CBD5E1'
-        },
-        {
-          id: `med-quiz-ans-${Date.now()}`,
-          type: 'quote',
-          content: 'Jawaban yang benar: A. Pilihan Satu karena...',
-          x: 10, y: 70, w: 80, h: 20,
-          fontSize: 14,
-          textColor: '#F59E0B'
-        }
-      ] : [
-        {
-          id: `med-item-${Date.now()}`,
-          type: type === 'cover' ? 'title' : 'text',
-          content: type === 'cover' ? 'Judul Baru' : 'Klik ganda untuk mengetik teks cerita di sini...',
-          x: 20, y: 30, w: 60, h: 20,
-          fontSize: type === 'cover' ? 28 : 16,
-          textColor: type === 'cover' ? '#ffffff' : '#CBD5E1'
-        }
-      ]
-    };
-    
-    // Auto-link map or timeline if they exist
-    if (type === 'map' && activeMaterial.maps && activeMaterial.maps.length > 0) {
-      newScene.activeMapId = activeMaterial.maps[0].id;
-      newScene.activeMapStepIndex = 0;
-    }
-    if (type === 'timeline') {
-      newScene.activeTimelineIndex = 0;
-    }
-
-    const updated = [...localScenes, newScene];
-    setLocalScenes(updated);
-    setSelectedSceneId(newScene.id);
-    setSelectedMediaItemId(null);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleDeleteScene = (sceneId: string) => {
-    if (localScenes.length <= 1) {
-      alert('Satu presentasi minimal harus memiliki 1 scene.');
-      return;
-    }
-    const updated = localScenes.filter(s => s.id !== sceneId);
-    setLocalScenes(updated);
-    if (selectedSceneId === sceneId) {
-      setSelectedSceneId(updated[0].id);
-    }
-    setSelectedMediaItemId(null);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleDuplicateScene = (sceneId: string) => {
-    const target = localScenes.find(s => s.id === sceneId);
-    if (!target) return;
-    const duplicated: StoryScene = {
-      ...target,
-      id: `scene-dup-${Date.now()}`,
-      title: `${target.title} (Salinan)`,
-      mediaItems: target.mediaItems?.map(item => ({
-        ...item,
-        id: `med-dup-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`
-      }))
-    };
-    const index = localScenes.findIndex(s => s.id === sceneId);
-    const updated = [...localScenes];
-    updated.splice(index + 1, 0, duplicated);
-    setLocalScenes(updated);
-    setSelectedSceneId(duplicated.id);
-    setSelectedMediaItemId(null);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleReorderScene = (sceneId: string, direction: 'up' | 'down') => {
-    const index = localScenes.findIndex(s => s.id === sceneId);
-    if (index === -1) return;
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === localScenes.length - 1) return;
-
-    const updated = [...localScenes];
-    const target = updated[index];
-    const swapWithIndex = direction === 'up' ? index - 1 : index + 1;
-    updated[index] = updated[swapWithIndex];
-    updated[swapWithIndex] = target;
-
-    setLocalScenes(updated);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleAddMediaItem = (type: StoryMediaItem['type']) => {
-    if (!selectedSceneId) return;
-    const itemContent = 
-      type === 'title' ? 'Judul Baru' :
-      type === 'quote' ? '“Kutipan sejarah penting di sini.”' :
-      type === 'image' ? 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&q=80&w=400' :
-      'Teks cerita baru yang bisa digeser dan disesuaikan ukurannya...';
-
-    const newItem: StoryMediaItem = {
-      id: `med-item-${Date.now()}`,
-      type,
-      content: itemContent,
-      x: 30,
-      y: 35,
-      w: type === 'image' ? 30 : 40,
-      h: type === 'image' ? 35 : 18,
-      fontSize: type === 'title' ? 24 : type === 'quote' ? 18 : 14,
-      textColor: type === 'quote' ? '#F59E0B' : '#ffffff',
-      rotate: 0
-    };
-
-    const updated = localScenes.map(s => {
-      if (s.id === selectedSceneId) {
-        return {
-          ...s,
-          mediaItems: [...(s.mediaItems || []), newItem]
-        };
-      }
-      return s;
-    });
-
-    setLocalScenes(updated);
-    setSelectedMediaItemId(newItem.id);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleUpdateMediaItem = (itemId: string, fields: Partial<StoryMediaItem>) => {
-    const updated = localScenes.map(s => {
-      if (s.id === selectedSceneId) {
-        return {
-          ...s,
-          mediaItems: s.mediaItems?.map(item => {
-            if (item.id === itemId) {
-              return { ...item, ...fields };
-            }
-            return item;
-          })
-        };
-      }
-      return s;
-    });
-    setLocalScenes(updated);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleDeleteMediaItem = (itemId: string) => {
-    const updated = localScenes.map(s => {
-      if (s.id === selectedSceneId) {
-        return {
-          ...s,
-          mediaItems: s.mediaItems?.filter(item => item.id !== itemId)
-        };
-      }
-      return s;
-    });
-    setLocalScenes(updated);
-    setSelectedMediaItemId(null);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
-
-  const handleUpdateSceneMeta = (fields: Partial<StoryScene>) => {
-    const updated = localScenes.map(s => {
-      if (s.id === selectedSceneId) {
-        return { ...s, ...fields };
-      }
-      return s;
-    });
-    setLocalScenes(updated);
-    onUpdateMaterial(activeMaterial.id, { storyScenes: updated });
-  };
+  // Storytelling Visual Editor Handlers removed.
 
   // Filter materials based on selected class
   const filteredMaterials = selectedClassId === 'all' 
@@ -765,56 +306,7 @@ export default function MateriView({
     }
   };
 
-  if (mode === 'presentation' && activeMaterial) {
-    return (
-      <StorytellingPresentation
-        activeMaterial={activeMaterial}
-        localScenes={localScenes}
-        activeSceneIndex={activeSceneIndex}
-        setActiveSceneIndex={setActiveSceneIndex}
-        mapWalkIndex={mapWalkIndex}
-        setMapWalkIndex={setMapWalkIndex}
-        activeTimelineIndex={activeTimelineIndex}
-        setActiveTimelineIndex={setActiveTimelineIndex}
-        activeSubMaterialId={activeSubMaterialId}
-        setActiveSubMaterialId={setActiveSubMaterialId}
-        quizRevealed={quizRevealed}
-        setQuizRevealed={setQuizRevealed}
-        setMode={setMode}
-      />
-    );
-  }
-
-  if (mode === 'story_editor' && activeMaterial) {
-    return (
-      <StorytellingDesigner
-        activeMaterial={activeMaterial}
-        localScenes={localScenes}
-        setLocalScenes={setLocalScenes}
-        selectedSceneId={selectedSceneId}
-        setSelectedSceneId={setSelectedSceneId}
-        selectedMediaItemId={selectedMediaItemId}
-        setSelectedMediaItemId={setSelectedMediaItemId}
-        isEditingTextInline={isEditingTextInline}
-        setIsEditingTextInline={setIsEditingTextInline}
-        inlineEditText={inlineEditText}
-        setInlineEditText={setInlineEditText}
-        onUpdateMaterial={onUpdateMaterial}
-        setMode={setMode}
-        handleAddScene={handleAddScene}
-        handleDeleteScene={handleDeleteScene}
-        handleDuplicateScene={handleDuplicateScene}
-        handleReorderScene={handleReorderScene}
-        handleAddMediaItem={handleAddMediaItem}
-        handleUpdateMediaItem={handleUpdateMediaItem}
-        handleDeleteMediaItem={handleDeleteMediaItem}
-        handleUpdateSceneMeta={handleUpdateSceneMeta}
-        setActiveSceneIndex={setActiveSceneIndex}
-        setMapWalkIndex={setMapWalkIndex}
-        setQuizRevealed={setQuizRevealed}
-      />
-    );
-  }
+  // Storytelling modules bypassed for standard materials.
 
   return (
     <div className="animate-fade-in" id="materi-container">
@@ -1333,32 +825,10 @@ export default function MateriView({
                   {/* Action Bar */}
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => {
-                        if (localScenes.length > 0) {
-                          setSelectedSceneId(localScenes[0].id);
-                        }
-                        setMode('story_editor');
-                      }}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-sm font-bold rounded-xl flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-                    >
-                      <Sparkles size={16} /> Desain Alur Cerita
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveSceneIndex(0);
-                        setMapWalkIndex(0);
-                        setQuizRevealed(false);
-                        setMode('presentation');
-                      }}
+                      onClick={handleStartEdit}
                       className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
                     >
-                      <Presentation size={16} /> Mode Presentasi Cerita
-                    </button>
-                    <button
-                      onClick={handleStartEdit}
-                      className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-                    >
-                      <Edit size={14} /> Edit
+                      <Edit size={14} /> Edit Materi
                     </button>
                     {materials.length > 1 && (
                       <button

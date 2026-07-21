@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import SettingsView from './components/SettingsView';
-import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, BookOpen, Menu, X, Sparkles, Tv, Settings as SettingsIcon } from 'lucide-react';
 import { ClassItem, Material, CalendarEvent, ReminderNote, Student, Meeting, GradeItem, AttendanceStatus } from './types';
 import { INITIAL_CLASSES, INITIAL_MATERIALS, INITIAL_CALENDAR_EVENTS, INITIAL_REMINDERS } from './data/initialData';
 import DashboardView from './components/DashboardView';
 import KelasView from './components/KelasView';
 import MateriView from './components/MateriView';
+import SlideBuilder from './components/SlideBuilder';
 
 export default function App() {
   // Global states
@@ -15,13 +16,13 @@ export default function App() {
   const [reminders, setReminders] = useState<ReminderNote[]>([]);
   
   // Navigation states
-  const [activeView, setActiveView] = useState<'dashboard' | 'kelas' | 'materi' | 'pengaturan'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'kelas' | 'materi' | 'presentasi' | 'pengaturan'>('dashboard');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [materiInitialMaterialId, setMateriInitialMaterialId] = useState<string | null>(null);
-  const [materiInitialMode, setMateriInitialMode] = useState<'view' | 'presentation' | null>(null);
-  const [currentMateriMode, setCurrentMateriMode] = useState<'view' | 'edit' | 'create' | 'presentation' | 'story_editor'>('view');
+  const [materiInitialMode, setMateriInitialMode] = useState<'view' | 'edit' | 'create' | null>(null);
+  const [currentMateriMode, setCurrentMateriMode] = useState<'view' | 'edit' | 'create'>('view');
   
-  const isPresentationModeActive = activeView === 'materi' && (currentMateriMode === 'presentation' || currentMateriMode === 'story_editor');
+  const isPresentationModeActive = false;
   
   // Mobile responsive state
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1280);
@@ -507,6 +508,22 @@ export default function App() {
                     <BookOpen size={isSidebarOpen ? 18 : 22} className="shrink-0" />
                     {isSidebarOpen && <span className="ml-3 truncate">Bank Materi</span>}
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveView('presentasi');
+                      if (window.innerWidth < 1280) setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-4' : 'justify-center px-0'} py-3.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      activeView === 'presentasi'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    title="Slide Builder"
+                  >
+                    <Tv size={isSidebarOpen ? 18 : 22} className="shrink-0" />
+                    {isSidebarOpen && <span className="ml-3 truncate">Slide Builder</span>}
+                  </button>
                 </nav>
 
                 <div className="p-3 border-t border-white/5">
@@ -550,6 +567,7 @@ export default function App() {
                      {activeView === 'dashboard' && 'Dashboard'}
                      {activeView === 'kelas' && 'Manajemen Kelas'}
                      {activeView === 'materi' && 'Bank Materi'}
+                     {activeView === 'presentasi' && 'Slide Builder'}
                      {activeView === 'pengaturan' && 'Pengaturan'}
                    </h2>
                    <p className="text-[11px] text-slate-500 font-medium tracking-wide uppercase">
@@ -632,6 +650,9 @@ export default function App() {
                   }}
                   onModeChange={setCurrentMateriMode}
                 />
+              )}
+              {activeView === 'presentasi' && (
+                <SlideBuilder />
               )}
               {activeView === 'pengaturan' && (
                 <SettingsView />
