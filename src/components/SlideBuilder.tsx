@@ -6,11 +6,14 @@ import {
   Play, Plus, Trash2, Edit2, Copy, ArrowUp, ArrowDown, Type, Image as ImageIcon, 
   Quote, Sparkles, BookOpen, Clock, Map as MapIcon, Compass, Sliders, ChevronRight, 
   MapPin as MapPinIcon, Info, Eye, EyeOff, Save, Undo, Redo, ChevronLeft, ChevronRight as ChevronRightIcon, 
-  Menu, X, CheckCircle2, AlertCircle, LayoutGrid, Layers, Tv, HelpCircle, Calendar, PlusCircle
+  Menu, X, CheckCircle2, AlertCircle, LayoutGrid, Layers, Tv, HelpCircle, Calendar, PlusCircle,
+  Square, Circle, Minus, MousePointer2, AlignHorizontalSpaceAround, AlignVerticalSpaceAround
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapBackground, GeographicOpenStreetMap } from './HistoricalMapEngine';
 import MapFocusMode from './MapFocusMode';
+import { SlideRenderer } from './SlideRenderer';
 import { INITIAL_PRESENTATIONS, PRESENTATION_TEMPLATES } from '../data/initialPresentations';
 
 export default function SlideBuilder() {
@@ -345,7 +348,7 @@ export default function SlideBuilder() {
   };
 
   // 5. ELEMENT (MEDIA ITEM) OPERATIONS
-  const handleAddMediaItem = (type: 'title' | 'text' | 'quote' | 'image') => {
+  const handleAddMediaItem = (type: 'title' | 'text' | 'quote' | 'image' | 'shape' | 'icon', shapeType?: StoryMediaItem['shapeType'], iconName?: string) => {
     if (!activePres || !selectedSceneId || !activeScene) return;
 
     const newItem: StoryMediaItem = {
@@ -354,11 +357,15 @@ export default function SlideBuilder() {
       content: type === 'title' ? 'Tambahkan Judul'
              : type === 'text' ? 'Tambahkan paragraf penjelasan sejarah yang berharga di sini...'
              : type === 'quote' ? '"Tulis kutipan sejarah yang puitis..."'
-             : 'https://images.unsplash.com/photo-1547891654-e66ed7edd96c?auto=format&fit=crop&q=80&w=800',
-      x: 30, y: 40, w: 40, h: type === 'image' ? 30 : 15,
-      fontSize: type === 'title' ? 24 : type === 'quote' ? 14 : 12,
+             : type === 'image' ? 'https://images.unsplash.com/photo-1547891654-e66ed7edd96c?auto=format&fit=crop&q=80&w=800'
+             : type === 'icon' ? (iconName || 'Compass') : '',
+      x: 30, y: 40, w: type === 'shape' && shapeType === 'line' ? 40 : type === 'icon' ? 10 : 40, h: type === 'image' ? 30 : type === 'shape' && shapeType === 'line' ? 2 : type === 'icon' ? 10 : 15,
+      fontSize: type === 'title' ? 24 : type === 'quote' ? 14 : type === 'icon' ? 48 : 12,
       textColor: type === 'quote' ? '#f59e0b' : '#ffffff',
-      label: type === 'image' ? 'Caption visual' : undefined
+      backgroundColor: type === 'shape' ? '#3b82f6' : undefined,
+      shapeType: shapeType,
+      label: type === 'image' ? 'Caption visual' : undefined,
+      borderRadius: type === 'shape' && shapeType === 'rounded' ? 12 : undefined,
     };
 
     const updatedScenes = activePres.scenes.map(s => {
@@ -924,123 +931,59 @@ export default function SlideBuilder() {
 
               {activeScene ? (
                 <div className="relative w-full aspect-video max-h-[85vh] bg-[#070A13] rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden shrink-0 transition-all">
-                  
-                  {/* BACKGROUND THEME RENDERER */}
-                  {activeScene.backgroundType === 'dark_slate' && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
-                      <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#f59e0b_1.5px,transparent_1.5px)] [background-size:32px_32px]"></div>
-                    </div>
-                  )}
-                  {activeScene.backgroundType === 'parchment' && (
-                    <div className="absolute inset-0 bg-[#FDFBF7] text-slate-900">
-                      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?auto=format&fit=crop&q=80&w=400')`, backgroundSize: 'cover' }}></div>
-                    </div>
-                  )}
-                  {activeScene.backgroundType === 'gradient' && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-emerald-950 text-slate-100"></div>
-                  )}
-                  {activeScene.backgroundType === 'color' && (
-                    <div className="absolute inset-0 text-slate-100" style={{ backgroundColor: activeScene.backgroundValue || '#0F172A' }}></div>
-                  )}
-
-                  {/* SPECIAL AUTOMATED TEMPLATES */}
-                  {activeScene.type === 'timeline' && (
-                    <div className="absolute inset-6 flex flex-col justify-between z-10 pointer-events-none text-left">
-                      <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl max-w-sm">
-                        <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-widest block">Slide Linimasa Otomatis</span>
-                        <h4 className="text-xs font-bold text-white uppercase">Slide ini memuat Milestone Garis Waktu Presentasi Anda secara otomatis</h4>
-                      </div>
-                      <div className="w-full h-1/2 flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-950/60 font-mono text-[11px]">
-                        {activePres.timeline && activePres.timeline.length > 0 ? (
-                          <div className="text-center space-y-2">
-                            <span className="text-emerald-400 font-bold block">✓ Terhubung dengan {activePres.timeline.length} Milestones Linimasa</span>
-                            <div className="flex gap-2 justify-center max-w-md flex-wrap opacity-50 text-[9px]">
-                              {activePres.timeline.map(t => (
-                                <span key={t.id} className="bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{t.year}</span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <span>Belum ada Garis Waktu yang dibuat untuk presentasi ini. Gunakan tab 'Kelola Data' di kanan untuk menambahkannya!</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {activeScene.type === 'map' && (
-                    <div className="absolute inset-6 z-10 text-left flex flex-col justify-between">
-                      <div className="bg-slate-900/95 border border-slate-800 p-3 rounded-xl max-w-sm shrink-0">
-                        <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest block">GIS Interactive Map Slide</span>
-                        <h4 className="text-xs font-bold text-white uppercase">{activeScene.title || "Slide Peta Rute Perjalanan"}</h4>
-                      </div>
-
-                      {/* Map content info */}
-                      <div className="flex-1 my-4 bg-slate-950/75 border border-slate-800 rounded-2xl p-6 flex flex-col justify-center items-center">
-                        {(() => {
-                          const linkedMap = activePres.maps?.find(m => m.id === activeScene.activeMapId);
-                          if (!linkedMap) {
-                            return (
-                              <div className="text-center space-y-2">
-                                <MapPinIcon className="text-cyan-400 mx-auto opacity-50" size={28} />
-                                <p className="text-slate-400 text-xs">Belum ada peta yang dihubungkan.</p>
-                                <p className="text-[9px] text-slate-500">Silakan hubungkan peta di panel sebelah kanan.</p>
-                              </div>
-                            );
-                          }
-
-                          if (!linkedMap.pins || linkedMap.pins.length === 0) {
-                            return (
-                              <div className="text-center space-y-2">
-                                <MapPinIcon className="text-cyan-400 mx-auto" size={28} />
-                                <p className="text-slate-400 text-xs">Peta "{linkedMap.name}" belum memiliki koordinat rute.</p>
-                                <p className="text-[9px] text-slate-500">Kelola pin peta melalui tab 'Kelola Data' di panel kanan.</p>
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div className="space-y-4 text-center">
-                              <span className="text-cyan-400 font-bold block text-sm">✓ Terhubung dengan Peta: {linkedMap.name} ({linkedMap.pins.length} Rute)</span>
-                              <div className="flex flex-wrap items-center justify-center gap-2">
-                                {linkedMap.pins.map((pin, pIdx) => (
-                                  <React.Fragment key={pin.id}>
-                                    <div className="bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-lg text-[10px] text-slate-300">
-                                      {pIdx + 1}. {pin.label}
-                                    </div>
-                                    {pIdx < linkedMap.pins.length - 1 && <ChevronRight size={10} className="text-cyan-500" />}
-                                  </React.Fragment>
-                                ))}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const sceneIdx = activePres.scenes.findIndex(s => s.id === activeScene.id);
-                                  if (sceneIdx !== -1) {
-                                    setPresentSceneIndex(sceneIdx);
-                                    setPresentMapWalkIndex(0);
-                                    setIsPresenting(true);
-                                  }
-                                }}
-                                className="mt-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer border border-indigo-500/30 group"
-                              >
-                                <Compass size={14} className="animate-spin-slow text-amber-400 group-hover:scale-110 transition-transform" />
-                                Buka Peta (Map Focus Mode)
-                              </button>
-                            </div>
-                          );
-                        })()}
-                      </div>
-
-                      <div className="bg-slate-900/95 border border-slate-800 p-2.5 rounded-xl flex items-center gap-2 max-w-md text-[9px] text-slate-400">
-                        <Info size={12} className="text-cyan-400 shrink-0" />
-                        <span>Sistem memuat peta interaktif secara dinamis selama Mode Presentasi berlangsung menggunakan data di atas.</span>
-                      </div>
-                    </div>
-                  )}
-
+                  <SlideRenderer
+                    scene={activeScene}
+                    material={activePres}
+                    maps={activePres.maps}
+                    timelineEvents={activePres.timeline}
+                    mode="editor"
+                    onOpenMapFocus={() => {
+                      const sceneIdx = activePres.scenes.findIndex(s => s.id === activeScene.id);
+                      if (sceneIdx !== -1) {
+                        setPresentSceneIndex(sceneIdx);
+                        setPresentMapWalkIndex(0);
+                        setIsPresenting(true);
+                      }
+                    }}
+                  >
                   {/* MEDIA ELEMENTS LIST */}
                   {activeScene.mediaItems?.map((item) => {
                     const isSelected = item.id === selectedMediaItemId;
+                    
+                    const DynamicIcon = item.type === 'icon' && item.content ? (LucideIcons as any)[item.content] : null;
+
+                    const itemStyle = {
+                      position: 'absolute' as const,
+                      left: `${item.x}%`,
+                      top: `${item.y}%`,
+                      width: `${item.w}%`,
+                      height: `${item.h}%`,
+                      transform: `rotate(${item.rotate || 0}deg) scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1})`,
+                      opacity: item.opacity !== undefined ? item.opacity / 100 : 1,
+                      border: item.border || 'none',
+                      borderRadius: item.borderRadius ? `${item.borderRadius}px` : '0px',
+                      boxShadow: item.shadow || 'none',
+                      backgroundColor: item.backgroundColor || 'transparent',
+                      zIndex: item.zIndex || 20, // We could map index if no zIndex
+                    };
+
+                    const textStyle = {
+                      fontSize: `${item.fontSize || 16}px`,
+                      color: item.textColor || '#ffffff',
+                      fontFamily: item.fontFamily || 'inherit',
+                      fontWeight: item.fontWeight || 'normal',
+                      fontStyle: item.fontStyle || 'normal',
+                      textDecoration: item.textDecoration || 'none',
+                      lineHeight: item.lineHeight || 1.5,
+                      letterSpacing: item.letterSpacing ? `${item.letterSpacing}px` : 'normal',
+                      textAlign: item.textAlign || 'left',
+                      textTransform: item.textTransform || 'none',
+                    };
+
+                    const filterStyle = {
+                      filter: `brightness(${item.brightness !== undefined ? item.brightness : 100}%) blur(${item.blur || 0}px) grayscale(${item.grayscale || 0}%) sepia(${item.sepia || 0}%)`
+                    };
+
                     return (
                       <div
                         key={item.id}
@@ -1052,24 +995,22 @@ export default function SlideBuilder() {
                         onDoubleClick={(e) => {
                           e.stopPropagation();
                           setSelectedMediaItemId(item.id);
-                          setIsEditingTextInline(true);
-                          setInlineEditText(item.content);
+                          if (item.type !== 'image' && item.type !== 'shape' && item.type !== 'icon') {
+                            setIsEditingTextInline(true);
+                            setInlineEditText(item.content);
+                          }
                         }}
                         style={{
-                          position: 'absolute',
-                          left: `${item.x}%`,
-                          top: `${item.y}%`,
-                          width: `${item.w}%`,
-                          height: `${item.h}%`,
-                          transform: `rotate(${item.rotate || 0}deg)`,
+                          ...itemStyle,
+                          zIndex: isSelected ? 40 : itemStyle.zIndex
                         }}
-                        className={`group cursor-move p-2.5 flex flex-col justify-center rounded-xl transition-all ${
+                        className={`group cursor-move p-0 flex flex-col justify-center rounded transition-all ${
                           isSelected 
-                            ? 'ring-2 ring-indigo-500 border border-indigo-400 bg-indigo-500/10 z-30' 
-                            : 'hover:ring-1 hover:ring-slate-700 hover:bg-slate-850/10 z-20'
+                            ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-[#070A13]' 
+                            : 'hover:ring-1 hover:ring-slate-700/50 hover:bg-slate-850/5'
                         }`}
                       >
-                        {isEditingTextInline && isSelected ? (
+                        {isEditingTextInline && isSelected && item.type !== 'image' && item.type !== 'shape' && item.type !== 'icon' ? (
                           <textarea
                             value={inlineEditText}
                             onChange={(e) => setInlineEditText(e.target.value)}
@@ -1077,43 +1018,55 @@ export default function SlideBuilder() {
                               handleUpdateMediaItem(item.id, { content: inlineEditText });
                               setIsEditingTextInline(false);
                             }}
-                            className="w-full h-full p-1.5 bg-slate-900 text-white border border-indigo-500 rounded outline-none resize-none text-[12px] font-medium leading-relaxed font-serif text-left"
+                            style={textStyle}
+                            className="w-full h-full p-2 bg-slate-900/80 border border-indigo-500 outline-none resize-none"
                             autoFocus
                           />
                         ) : (
-                          <div className="w-full h-full overflow-hidden flex flex-col justify-center relative select-text">
-                            {item.type === 'title' && (
-                              <h3 
-                                style={{ fontSize: `${item.fontSize || 22}px`, color: item.textColor || '#ffffff' }}
-                                className="font-bold tracking-tight text-center w-full"
-                              >
+                          <div className="w-full h-full overflow-hidden flex flex-col relative select-text" style={{ justifyContent: item.type === 'shape' ? 'center' : 'flex-start' }}>
+                            {(item.type === 'title' || item.type === 'text') && (
+                              <div style={textStyle} className="w-full h-full p-2 whitespace-pre-wrap">
                                 {item.content}
-                              </h3>
-                            )}
-                            {item.type === 'text' && (
-                              <p 
-                                style={{ fontSize: `${item.fontSize || 12}px`, color: item.textColor || '#CBD5E1' }}
-                                className="leading-relaxed whitespace-pre-wrap text-center w-full font-serif"
-                              >
-                                {item.content}
-                              </p>
+                              </div>
                             )}
                             {item.type === 'quote' && (
                               <blockquote 
-                                style={{ fontSize: `${item.fontSize || 14}px`, color: item.textColor || '#F59E0B' }}
-                                className="italic border-l-2 border-amber-500/50 pl-3 font-serif py-0.5 text-center w-full"
+                                style={{ ...textStyle, borderLeft: '4px solid #F59E0B' }}
+                                className="pl-4 py-1 italic w-full h-full"
                               >
                                 {item.content}
                               </blockquote>
                             )}
                             {item.type === 'image' && (
-                              <div className="w-full h-full relative border border-slate-800 rounded-lg overflow-hidden bg-slate-950 flex flex-col justify-between">
-                                <img src={item.content} alt={item.label || "Visual"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              <div className="w-full h-full relative" style={filterStyle}>
+                                <img src={item.content} alt={item.label || "Visual"} className="w-full h-full object-cover" style={{ borderRadius: item.borderRadius ? `${item.borderRadius}px` : '0px' }} referrerPolicy="no-referrer" />
                                 {item.label && (
-                                  <span className="absolute bottom-0 inset-x-0 bg-slate-900/95 text-white font-bold text-[8px] p-1 text-center truncate border-t border-slate-800">
+                                  <span className="absolute bottom-0 inset-x-0 bg-slate-900/95 text-white font-bold text-[10px] p-1.5 text-center truncate backdrop-blur-md">
                                     {item.label}
                                   </span>
                                 )}
+                              </div>
+                            )}
+                            {item.type === 'shape' && (
+                              <div 
+                                className="w-full h-full" 
+                                style={{
+                                  ...filterStyle,
+                                  backgroundColor: item.backgroundColor || '#ffffff',
+                                  borderRadius: item.shapeType === 'circle' ? '50%' : item.shapeType === 'rounded' ? '12px' : item.borderRadius ? `${item.borderRadius}px` : '0px',
+                                  border: item.border,
+                                }}
+                              >
+                                {item.shapeType === 'line' && (
+                                  <div className="w-full h-full bg-transparent flex flex-col justify-center">
+                                    <div style={{ backgroundColor: item.backgroundColor || '#ffffff', height: '2px', width: '100%' }}></div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {item.type === 'icon' && DynamicIcon && (
+                              <div className="w-full h-full flex items-center justify-center" style={{ ...textStyle, ...filterStyle }}>
+                                <DynamicIcon style={{ width: '100%', height: '100%' }} />
                               </div>
                             )}
                           </div>
@@ -1137,6 +1090,7 @@ export default function SlideBuilder() {
                       </div>
                     );
                   })}
+                  </SlideRenderer>
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-500 italic space-y-2">
@@ -1211,30 +1165,98 @@ export default function SlideBuilder() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Latar Belakang:</label>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">Latar Belakang Slide:</label>
                         <select
                           value={activeScene.backgroundType}
-                          onChange={(e) => handleUpdateSceneMeta({ backgroundType: e.target.value as any })}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            handleUpdateSceneMeta({ 
+                              backgroundType: val,
+                              backgroundValue: val === 'image' || val === 'pattern' || val === 'texture' ? '' : activeScene.backgroundValue,
+                            });
+                          }}
                           className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none focus:border-indigo-500"
                         >
-                          <option value="dark_slate">Dark Slate</option>
-                          <option value="parchment">Parchment</option>
-                          <option value="gradient">Gradient</option>
+                          <option value="dark_slate">Dark Slate (Default)</option>
+                          <option value="parchment">Kertas Klasik (Parchment)</option>
+                          <option value="gradient">Gradient Modern</option>
                           <option value="color">Warna Solid</option>
+                          <option value="image">Gambar Khusus</option>
+                          <option value="pattern">Pola Khusus (Pattern)</option>
+                          <option value="texture">Tekstur Khusus</option>
                         </select>
                       </div>
 
                       {activeScene.backgroundType === 'color' && (
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Warna Latar:</label>
+                        <div className="space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                          <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">Warna Solid:</label>
                           <input
                             type="color"
                             value={activeScene.backgroundValue || '#0F172A'}
                             onChange={(e) => handleUpdateSceneMeta({ backgroundValue: e.target.value })}
-                            className="w-full h-8 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer p-0.5"
+                            className="w-full h-8 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer p-0.5"
                           />
+                        </div>
+                      )}
+
+                      {(activeScene.backgroundType === 'image' || activeScene.backgroundType === 'pattern' || activeScene.backgroundType === 'texture') && (
+                        <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">URL Aset:</label>
+                            <input
+                              type="text"
+                              placeholder="https://..."
+                              value={activeScene.backgroundValue || ''}
+                              onChange={(e) => handleUpdateSceneMeta({ backgroundValue: e.target.value })}
+                              className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block">Fill Mode:</label>
+                            <select
+                              value={activeScene.backgroundSettings?.fillMode || 'cover'}
+                              onChange={(e) => handleUpdateSceneMeta({ 
+                                backgroundSettings: { ...activeScene.backgroundSettings, fillMode: e.target.value as any }
+                              })}
+                              className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
+                            >
+                              <option value="cover">Fill (Cover)</option>
+                              <option value="contain">Fit (Contain)</option>
+                              <option value="repeat">Repeat (Tile)</option>
+                              <option value="center">Center</option>
+                            </select>
+                          </div>
+                          
+                          <div className="space-y-1.5 pt-1 border-t border-slate-800">
+                            <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                              <span>Opacity:</span>
+                              <span className="font-bold text-indigo-400">{activeScene.backgroundSettings?.opacity !== undefined ? activeScene.backgroundSettings.opacity : 100}%</span>
+                            </div>
+                            <input
+                              type="range" min="0" max="100" value={activeScene.backgroundSettings?.opacity !== undefined ? activeScene.backgroundSettings.opacity : 100}
+                              onChange={(e) => handleUpdateSceneMeta({ 
+                                backgroundSettings: { ...activeScene.backgroundSettings, opacity: parseInt(e.target.value) }
+                              })}
+                              className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                              <span>Blur:</span>
+                              <span className="font-bold text-indigo-400">{activeScene.backgroundSettings?.blur || 0}px</span>
+                            </div>
+                            <input
+                              type="range" min="0" max="20" value={activeScene.backgroundSettings?.blur || 0}
+                              onChange={(e) => handleUpdateSceneMeta({ 
+                                backgroundSettings: { ...activeScene.backgroundSettings, blur: parseInt(e.target.value) }
+                              })}
+                              className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1276,6 +1298,22 @@ export default function SlideBuilder() {
                           <ImageIcon size={12} className="text-cyan-400" /> Gambar
                         </button>
                       </div>
+                      
+                      <span className="font-mono text-[10px] font-bold text-emerald-500 uppercase tracking-widest block pt-2 border-t border-slate-800">Shapes & Icons</span>
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                        <button onClick={() => handleAddMediaItem('shape', 'rectangle')} className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                          <Square size={12} className="text-blue-400" /> Kotak
+                        </button>
+                        <button onClick={() => handleAddMediaItem('shape', 'circle')} className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                          <Circle size={12} className="text-red-400" /> Lingkaran
+                        </button>
+                        <button onClick={() => handleAddMediaItem('shape', 'line')} className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                          <Minus size={12} className="text-emerald-400" /> Garis
+                        </button>
+                        <button onClick={() => handleAddMediaItem('icon', undefined, 'Landmark')} className="px-3 py-2 bg-slate-950/60 hover:bg-slate-900 text-slate-200 border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                          <MousePointer2 size={12} className="text-purple-400" /> Icon
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1314,7 +1352,13 @@ export default function SlideBuilder() {
 
                         {/* Coordinates and Sizing */}
                         <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
-                          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Dimensi & Posisi (%)</span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Dimensi & Posisi (%)</span>
+                            <div className="flex gap-1">
+                              <button onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { x: 50 - (selectedMediaItem.w / 2) })} className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white" title="Align Center X"><AlignVerticalSpaceAround size={10} /></button>
+                              <button onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { y: 50 - (selectedMediaItem.h / 2) })} className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white" title="Align Center Y"><AlignHorizontalSpaceAround size={10} /></button>
+                            </div>
+                          </div>
                           
                           <div className="space-y-1">
                             <div className="flex justify-between text-[9px] font-mono text-slate-400">
@@ -1366,38 +1410,201 @@ export default function SlideBuilder() {
                         </div>
 
                         {/* Text formatting options */}
-                        {selectedMediaItem.type !== 'image' && (
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Font Size:</label>
-                              <input
-                                type="number" min="10" max="48" value={selectedMediaItem.fontSize || 14}
-                                onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { fontSize: parseInt(e.target.value) })}
-                                className="w-full px-2 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
-                              />
-                            </div>
+                        {selectedMediaItem.type !== 'image' && selectedMediaItem.type !== 'shape' && (
+                          <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Typography</span>
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Font Family:</label>
+                                <select
+                                  value={selectedMediaItem.fontFamily || 'inherit'}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { fontFamily: e.target.value })}
+                                  className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
+                                >
+                                  <option value="inherit">Default</option>
+                                  <option value="var(--font-sans)">Sans Serif</option>
+                                  <option value="var(--font-serif)">Serif (Playfair)</option>
+                                  <option value="var(--font-mono)">Monospace</option>
+                                </select>
+                              </div>
 
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Warna:</label>
-                              <input
-                                type="color" value={selectedMediaItem.textColor || '#ffffff'}
-                                onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { textColor: e.target.value })}
-                                className="w-full h-8 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer p-0.5"
-                              />
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Alignment:</label>
+                                <select
+                                  value={selectedMediaItem.textAlign || 'left'}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { textAlign: e.target.value as any })}
+                                  className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
+                                >
+                                  <option value="left">Kiri</option>
+                                  <option value="center">Tengah</option>
+                                  <option value="right">Kanan</option>
+                                  <option value="justify">Justify</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Font Size:</label>
+                                <input
+                                  type="number" min="8" max="144" value={selectedMediaItem.fontSize || 14}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { fontSize: parseInt(e.target.value) })}
+                                  className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 outline-none"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Warna Teks:</label>
+                                <input
+                                  type="color" value={selectedMediaItem.textColor || '#ffffff'}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { textColor: e.target.value })}
+                                  className="w-full h-7 bg-slate-900 border border-slate-800 rounded-lg cursor-pointer p-0.5"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { fontWeight: selectedMediaItem.fontWeight === 'bold' ? 'normal' : 'bold' })}
+                                className={`flex-1 py-1 text-xs font-serif font-bold border rounded-lg ${selectedMediaItem.fontWeight === 'bold' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-900 text-slate-400 border-slate-800'}`}
+                              >
+                                B
+                              </button>
+                              <button
+                                onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { fontStyle: selectedMediaItem.fontStyle === 'italic' ? 'normal' : 'italic' })}
+                                className={`flex-1 py-1 text-xs font-serif italic border rounded-lg ${selectedMediaItem.fontStyle === 'italic' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-900 text-slate-400 border-slate-800'}`}
+                              >
+                                I
+                              </button>
+                              <button
+                                onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { textDecoration: selectedMediaItem.textDecoration === 'underline' ? 'none' : 'underline' })}
+                                className={`flex-1 py-1 text-xs font-serif underline border rounded-lg ${selectedMediaItem.textDecoration === 'underline' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-slate-900 text-slate-400 border-slate-800'}`}
+                              >
+                                U
+                              </button>
                             </div>
                           </div>
                         )}
+                        
+                        {/* Appearance / Shape Options */}
+                        <div className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Appearance</span>
+                          
+                          {(selectedMediaItem.type === 'shape') && (
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide">Warna Fill / Background:</label>
+                              <input
+                                type="color" value={selectedMediaItem.backgroundColor || '#3b82f6'}
+                                onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { backgroundColor: e.target.value })}
+                                className="w-full h-8 bg-slate-900 border border-slate-800 rounded-lg cursor-pointer p-0.5"
+                              />
+                            </div>
+                          )}
 
-                        <div className="space-y-1.5 pt-2">
-                          <div className="flex justify-between text-[9px] font-mono text-slate-400">
-                            <span>Rotasi:</span>
-                            <span className="font-bold text-indigo-400">{selectedMediaItem.rotate || 0}°</span>
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                              <span>Rotasi:</span>
+                              <span className="font-bold text-indigo-400">{selectedMediaItem.rotate || 0}°</span>
+                            </div>
+                            <input
+                              type="range" min="-180" max="180" value={selectedMediaItem.rotate || 0}
+                              onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { rotate: parseInt(e.target.value) })}
+                              className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                            />
                           </div>
-                          <input
-                            type="range" min="-45" max="45" value={selectedMediaItem.rotate || 0}
-                            onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { rotate: parseInt(e.target.value) })}
-                            className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
-                          />
+                          
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                              <span>Opacity:</span>
+                              <span className="font-bold text-indigo-400">{selectedMediaItem.opacity !== undefined ? selectedMediaItem.opacity : 100}%</span>
+                            </div>
+                            <input
+                              type="range" min="0" max="100" value={selectedMediaItem.opacity !== undefined ? selectedMediaItem.opacity : 100}
+                              onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { opacity: parseInt(e.target.value) })}
+                              className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                            />
+                          </div>
+
+                          {selectedMediaItem.type === 'image' && (
+                            <>
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                                  <span>Border Radius:</span>
+                                  <span className="font-bold text-indigo-400">{selectedMediaItem.borderRadius || 0}px</span>
+                                </div>
+                                <input
+                                  type="range" min="0" max="100" value={selectedMediaItem.borderRadius || 0}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { borderRadius: parseInt(e.target.value) })}
+                                  className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                                  <span>Brightness:</span>
+                                  <span className="font-bold text-indigo-400">{selectedMediaItem.brightness !== undefined ? selectedMediaItem.brightness : 100}%</span>
+                                </div>
+                                <input
+                                  type="range" min="0" max="200" value={selectedMediaItem.brightness !== undefined ? selectedMediaItem.brightness : 100}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { brightness: parseInt(e.target.value) })}
+                                  className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                                />
+                              </div>
+                              
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                                  <span>Blur:</span>
+                                  <span className="font-bold text-indigo-400">{selectedMediaItem.blur || 0}px</span>
+                                </div>
+                                <input
+                                  type="range" min="0" max="20" value={selectedMediaItem.blur || 0}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { blur: parseInt(e.target.value) })}
+                                  className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                                  <span>Grayscale:</span>
+                                  <span className="font-bold text-indigo-400">{selectedMediaItem.grayscale || 0}%</span>
+                                </div>
+                                <input
+                                  type="range" min="0" max="100" value={selectedMediaItem.grayscale || 0}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { grayscale: parseInt(e.target.value) })}
+                                  className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                                />
+                              </div>
+                              
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                                  <span>Sepia:</span>
+                                  <span className="font-bold text-indigo-400">{selectedMediaItem.sepia || 0}%</span>
+                                </div>
+                                <input
+                                  type="range" min="0" max="100" value={selectedMediaItem.sepia || 0}
+                                  onChange={(e) => handleUpdateMediaItem(selectedMediaItem.id, { sepia: parseInt(e.target.value) })}
+                                  className="w-full accent-indigo-500 cursor-pointer h-1 bg-slate-800"
+                                />
+                              </div>
+                            </>
+                          )}
+                          
+                          <div className="space-y-1.5 pt-1 border-t border-slate-800 mt-2">
+                            <label className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wide block mt-2">Layer (z-Index):</label>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { zIndex: (selectedMediaItem.zIndex || 20) + 1 })}
+                                className="flex-1 py-1 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded"
+                              >
+                                Bring Forward
+                              </button>
+                              <button
+                                onClick={() => handleUpdateMediaItem(selectedMediaItem.id, { zIndex: Math.max(1, (selectedMediaItem.zIndex || 20) - 1) })}
+                                className="flex-1 py-1 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded"
+                              >
+                                Send Backward
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                         <button
@@ -1579,6 +1786,19 @@ export default function SlideBuilder() {
                 {currentScene.backgroundType === 'color' && (
                   <div className="absolute inset-0 text-slate-100 transition-all duration-700" style={{ backgroundColor: currentScene.backgroundValue || '#0F172A' }}></div>
                 )}
+                {(currentScene.backgroundType === 'image' || currentScene.backgroundType === 'pattern' || currentScene.backgroundType === 'texture') && currentScene.backgroundValue && (
+                  <div 
+                    className="absolute inset-0 transition-all duration-700"
+                    style={{
+                      backgroundImage: `url(${currentScene.backgroundValue})`,
+                      backgroundSize: currentScene.backgroundSettings?.fillMode === 'contain' ? 'contain' : currentScene.backgroundSettings?.fillMode === 'repeat' ? 'auto' : currentScene.backgroundSettings?.fillMode === 'center' ? 'auto' : 'cover',
+                      backgroundRepeat: currentScene.backgroundSettings?.fillMode === 'repeat' ? 'repeat' : 'no-repeat',
+                      backgroundPosition: 'center',
+                      opacity: currentScene.backgroundSettings?.opacity !== undefined ? currentScene.backgroundSettings.opacity / 100 : 1,
+                      filter: `blur(${currentScene.backgroundSettings?.blur || 0}px)`,
+                    }}
+                  />
+                )}
               </>
             );
           })()}
@@ -1641,254 +1861,21 @@ export default function SlideBuilder() {
                     transition={{ duration: 0.35, ease: 'easeOut' }}
                     className="w-full h-full flex items-center justify-center"
                   >
-                    {/* A. COVER SLIDE */}
-                    {currentScene.type === 'cover' && (
-                      <div className="w-full max-w-4xl text-center space-y-6 px-4">
-                        <span className="inline-block bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                          PRESENTATION COVER
-                        </span>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none drop-shadow-lg">
-                          {currentScene.title}
-                        </h1>
-                        <p className="text-slate-300 font-medium text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-                          {currentScene.narration}
-                        </p>
-                        
-                        {/* Absolute Media Items */}
-                        {currentScene.mediaItems?.map(item => (
-                          <div
-                            key={item.id}
-                            style={{
-                              position: 'absolute',
-                              left: `${item.x}%`,
-                              top: `${item.y}%`,
-                              width: `${item.w}%`,
-                              height: `${item.h}%`,
-                              transform: `rotate(${item.rotate || 0}deg)`
-                            }}
-                            className="z-20 pointer-events-none"
-                          >
-                            {item.type === 'image' && (
-                              <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl">
-                                <img src={item.content} alt="Media" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              </div>
-                            )}
-                            {item.type === 'quote' && (
-                              <p style={{ color: item.textColor || '#fbbf24', fontSize: `${item.fontSize || 16}px` }} className="italic font-serif pl-4 border-l-2 border-amber-500/50 text-left">
-                                {item.content}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* B. NARRATIVE SLIDE */}
-                    {currentScene.type === 'narrative' && (
-                      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center px-4">
-                        <div className="md:col-span-7 space-y-5 text-left">
-                          <span className="font-mono text-xs font-bold text-indigo-400 uppercase tracking-widest">NARASI SEJARAH</span>
-                          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight">
-                            {currentScene.title}
-                          </h2>
-                          <p className="text-slate-200 text-sm md:text-base leading-relaxed whitespace-pre-line font-serif">
-                            {currentScene.narration}
-                          </p>
-                        </div>
-                        
-                        <div className="md:col-span-5 relative">
-                          {currentScene.mediaItems?.find(m => m.type === 'image') ? (
-                            (() => {
-                              const imgItem = currentScene.mediaItems.find(m => m.type === 'image')!;
-                              return (
-                                <div className="rounded-3xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-slate-900 p-2 transform rotate-1">
-                                  <img src={imgItem.content} alt="Artifact" className="w-full aspect-[4/3] object-cover rounded-2xl" referrerPolicy="no-referrer" />
-                                  {imgItem.label && (
-                                    <p className="text-[10px] text-slate-400 font-bold text-center mt-2 uppercase tracking-wide">
-                                      {imgItem.label}
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })()
-                          ) : (
-                            <div className="rounded-3xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-slate-900/60 p-6 text-center space-y-4">
-                              <Quote size={24} className="text-amber-500 mx-auto" />
-                              <blockquote className="italic text-slate-300 text-xs md:text-sm font-serif">
-                                {currentScene.mediaItems?.find(m => m.type === 'quote')?.content || '"Penyelidikan sejarah yang mendalam membuka jalan bagi pemahaman masa depan."'}
-                              </blockquote>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* C. TIMELINE SLIDE */}
-                    {currentScene.type === 'timeline' && (
-                      <div className="w-full h-full flex flex-col justify-between px-4 text-left">
-                        <div className="text-center space-y-1 shrink-0">
-                          <span className="font-mono text-[10px] font-bold text-amber-500 uppercase tracking-widest block">Interactive Milestone Timeline</span>
-                          <h3 className="font-extrabold text-lg text-white">{currentScene.title}</h3>
-                        </div>
-
-                        {activePres.timeline?.[presentTimelineIndex] && (
-                          <div className="flex-1 my-4 flex items-center justify-center max-w-4xl mx-auto w-full overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full items-stretch">
-                              <div className="md:col-span-12 bg-slate-900/90 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center space-y-3 shadow-xl">
-                                <span className="text-amber-400 font-mono font-black text-xl md:text-2xl">{activePres.timeline[presentTimelineIndex].year}</span>
-                                <h4 className="font-bold text-base md:text-lg text-white tracking-tight uppercase">{activePres.timeline[presentTimelineIndex].title}</h4>
-                                <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-serif">{activePres.timeline[presentTimelineIndex].description}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Horizontal Track */}
-                        <div className="h-20 border-t border-slate-800 bg-slate-950/60 rounded-2xl p-3 flex items-center justify-between gap-4 shrink-0 overflow-x-auto no-scrollbar">
-                          {activePres.timeline?.map((evt, idx) => (
-                            <div
-                              key={evt.id}
-                              onClick={() => setPresentTimelineIndex(idx)}
-                              className={`px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer text-center shrink-0 min-w-[140px] ${
-                                idx === presentTimelineIndex
-                                  ? 'bg-amber-500/10 border border-amber-500/40 shadow-lg scale-105'
-                                  : 'border border-slate-900 hover:bg-slate-900/40'
-                              }`}
-                            >
-                              <span className={`block text-xs font-mono font-black ${idx === presentTimelineIndex ? 'text-amber-400' : 'text-slate-400'}`}>{evt.year}</span>
-                              <span className={`block text-[10px] truncate ${idx === presentTimelineIndex ? 'text-white font-extrabold' : 'text-slate-500'}`}>{evt.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* D. MAP SLIDE */}
-                    {currentScene.type === 'map' && (
-                      <div className="w-full h-full flex flex-col justify-between px-4 text-left">
-                        <div className="text-center space-y-1 shrink-0">
-                          <span className="font-mono text-[10px] font-bold text-cyan-400 uppercase tracking-widest block">Peta Rute Peradaban Terpadu (Leaflet Live)</span>
-                          <h3 className="font-extrabold text-lg text-white">{currentScene.title}</h3>
-                        </div>
-
-                        <div className="flex-1 my-3 relative overflow-hidden rounded-3xl border border-slate-800 bg-[#070B13]">
-                          {(() => {
-                            const linkedMap = activePres.maps?.find(m => m.id === currentScene.activeMapId);
-                            const pins = (linkedMap?.pins || []);
-                            const activePin = pins[presentMapWalkIndex] || null;
-
-                            return (
-                              <div className="w-full h-full relative">
-                                <GeographicOpenStreetMap
-                                  pins={pins}
-                                  showRoute={linkedMap?.showRoute ?? true}
-                                  activePinId={activePin?.id || null}
-                                  onPinClick={(p) => {
-                                    const idx = pins.findIndex(x => x.id === p.id);
-                                    if (idx !== -1) setPresentMapWalkIndex(idx);
-                                  }}
-                                />
-
-                                {/* GPS HUD overlay */}
-                                <div className="absolute top-4 left-4 bg-slate-950/95 border border-slate-800 px-3.5 py-2 rounded-xl font-mono text-[9px] text-cyan-400 pointer-events-none shadow-xl z-[400] flex items-center gap-1.5">
-                                  <Compass size={11} className="animate-spin-slow text-cyan-400" />
-                                  <span>POSISI GPS • LOKASI {pins.length > 0 ? presentMapWalkIndex + 1 : 0} DARI {pins.length}</span>
-                                </div>
-
-                                {/* HUD Detailed Card */}
-                                {activePin && (
-                                  <div className="absolute bottom-4 left-4 right-4 bg-slate-950/95 border border-slate-800 p-4 rounded-2xl shadow-2xl z-[400] flex items-start gap-3">
-                                    <div className="bg-cyan-500/10 border border-cyan-500/20 p-2.5 rounded-xl text-cyan-400 font-mono font-black text-xs shrink-0">
-                                      POS {presentMapWalkIndex + 1}
-                                    </div>
-                                    <div className="flex-1 space-y-1">
-                                      <h5 className="font-extrabold text-sm text-white uppercase tracking-wider">{activePin.label}</h5>
-                                      <p className="text-xs text-slate-200 leading-relaxed font-sans">{activePin.description}</p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* E. QUIZ SLIDE */}
-                    {currentScene.type === 'quiz' && (
-                      <div className="w-full max-w-3xl space-y-6 px-4 text-left">
-                        <span className="inline-block bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                          KUIS INTERAKTIF SEJARAH
-                        </span>
-                        
-                        <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                          {currentScene.title}
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {currentScene.mediaItems?.find(m => m.type === 'text')?.content.split('\n').map((opt, oIdx) => (
-                            <button
-                              key={oIdx}
-                              onClick={() => setPresentQuizRevealed(true)}
-                              className={`p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${
-                                presentQuizRevealed && opt.startsWith('A.')
-                                  ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg scale-102 ring-1 ring-emerald-500/20'
-                                  : presentQuizRevealed
-                                    ? 'bg-slate-900/40 border-slate-900/60 opacity-50'
-                                    : 'bg-slate-900/80 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-850'
-                              }`}
-                            >
-                              <span className={`text-xs md:text-sm font-bold ${presentQuizRevealed && opt.startsWith('A.') ? 'text-emerald-400' : 'text-slate-200'}`}>
-                                {opt}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-
-                        {presentQuizRevealed ? (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3"
-                          >
-                            <Sparkles className="text-amber-400 shrink-0 mt-0.5" size={16} />
-                            <div className="space-y-1">
-                              <span className="font-mono text-[10px] font-black text-amber-500 uppercase tracking-widest">Eksplorasi Pembahasan:</span>
-                              <p className="text-xs text-slate-300 font-serif leading-relaxed">
-                                {currentScene.mediaItems?.find(m => m.type === 'quote')?.content || 'Jawaban A merupakan jawaban yang terverifikasi secara autentik menurut dokumen arsip kontemporer.'}
-                              </p>
-                            </div>
-                          </motion.div>
-                        ) : (
-                          <button
-                            onClick={() => setPresentQuizRevealed(true)}
-                            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl flex items-center gap-2 mx-auto cursor-pointer transition-colors"
-                          >
-                            <CheckCircle2 size={14} /> Periksa Jawaban Benar
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* F. REFLECTION SLIDE */}
-                    {currentScene.type === 'reflection' && (
-                      <div className="w-full max-w-3xl text-center space-y-6 px-4">
-                        <span className="inline-block bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                          REFLEKSI SEJARAH
-                        </span>
-                        
-                        <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-serif">
-                          {currentScene.title}
-                        </h2>
-                        
-                        <div className="p-6 bg-slate-900/65 border border-slate-800 rounded-2xl max-w-xl mx-auto space-y-4">
-                          <Compass size={24} className="text-rose-400 mx-auto" />
-                          <p className="text-xs md:text-sm text-slate-200 leading-relaxed font-serif italic leading-relaxed">
-                            {currentScene.narration}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    <SlideRenderer
+                      scene={currentScene}
+                      material={activePres}
+                      maps={activePres.maps}
+                      timelineEvents={activePres.timeline}
+                      mode="presentation"
+                      activeTimelineIndex={presentTimelineIndex}
+                      activeMapWalkIndex={presentMapWalkIndex}
+                      quizRevealed={presentQuizRevealed}
+                      activeSubMaterialId={presentSubMaterialId}
+                      setActiveTimelineIndex={setPresentTimelineIndex}
+                      setMapWalkIndex={setPresentMapWalkIndex}
+                      setQuizRevealed={setPresentQuizRevealed}
+                      setActiveSubMaterialId={setPresentSubMaterialId}
+                    />
                   </motion.div>
                 );
               })()}

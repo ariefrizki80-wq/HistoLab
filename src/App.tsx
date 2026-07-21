@@ -606,6 +606,7 @@ export default function App() {
                   materials={materials}
                   events={events}
                   reminders={reminders}
+                  teacherProfile={teacherProfile}
                   onAddEvent={handleAddEvent}
                   onDeleteEvent={handleDeleteEvent}
                   onAddReminder={handleAddReminder}

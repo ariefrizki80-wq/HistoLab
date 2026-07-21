@@ -68,8 +68,8 @@ export interface HistoricalMap {
 
 export interface StoryMediaItem {
   id: string;
-  type: 'image' | 'text' | 'quote' | 'title' | 'map' | 'timeline' | 'quiz';
-  content: string; // text content or URL
+  type: 'image' | 'text' | 'quote' | 'title' | 'map' | 'timeline' | 'quiz' | 'shape' | 'icon';
+  content: string; // text content or URL or icon name
   x: number; // percentage from left, e.g. 10
   y: number; // percentage from top, e.g. 20
   w: number; // percentage width, e.g. 30
@@ -79,6 +79,34 @@ export interface StoryMediaItem {
   textColor?: string;
   backgroundColor?: string;
   label?: string; // caption or title
+  
+  // Advanced Typography
+  fontFamily?: string;
+  fontWeight?: string | number;
+  fontStyle?: 'normal' | 'italic';
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  lineHeight?: number;
+  letterSpacing?: number;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  
+  // Appearance
+  opacity?: number;
+  border?: string; // e.g. "2px solid #000"
+  borderRadius?: number; // px or percentage
+  shadow?: string; // css box-shadow string
+  zIndex?: number;
+  
+  // Shapes
+  shapeType?: 'rectangle' | 'rounded' | 'circle' | 'line' | 'arrow' | 'divider';
+  
+  // Image Effects
+  brightness?: number;
+  blur?: number;
+  grayscale?: number;
+  sepia?: number;
+  flipX?: boolean;
+  flipY?: boolean;
 }
 
 export interface StoryScene {
@@ -86,8 +114,15 @@ export interface StoryScene {
   type: 'cover' | 'narrative' | 'timeline' | 'map' | 'quiz' | 'reflection';
   title: string;
   narration?: string;
-  backgroundType: 'color' | 'gradient' | 'image' | 'parchment' | 'dark_slate';
+  backgroundType: 'color' | 'gradient' | 'image' | 'pattern' | 'texture' | 'parchment' | 'dark_slate';
   backgroundValue: string; // e.g. color code, image URL, or gradient class
+  backgroundSettings?: {
+    opacity?: number;
+    blur?: number;
+    brightness?: number;
+    contrast?: number;
+    fillMode?: 'cover' | 'contain' | 'fill' | 'center' | 'repeat';
+  };
   mediaItems?: StoryMediaItem[];
   activeTimelineIndex?: number; // index of focused timeline event
   activeMapId?: string; // ID of focused historical map

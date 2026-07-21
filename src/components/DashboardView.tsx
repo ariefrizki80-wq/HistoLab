@@ -7,6 +7,7 @@ interface DashboardViewProps {
   materials: Material[];
   events: CalendarEvent[];
   reminders: ReminderNote[];
+  teacherProfile?: { fullName: string; school: string; initial: string; };
   onAddEvent: (event: Omit<CalendarEvent, 'id'>) => void;
   onDeleteEvent: (id: string) => void;
   onAddReminder: (reminder: Omit<ReminderNote, 'id' | 'createdAt'>) => void;
@@ -21,6 +22,7 @@ export default function DashboardView({
   materials,
   events,
   reminders,
+  teacherProfile,
   onAddEvent,
   onDeleteEvent,
   onAddReminder,
@@ -125,7 +127,7 @@ export default function DashboardView({
             <Sparkles size={12} /> Digital Workspace Guru Sejarah
           </span>
           <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
-            Selamat Datang di HistoLab, Paijo!
+            Selamat Datang di HistoLab, {teacherProfile ? teacherProfile.fullName.split(',')[0].split(' ')[0] : 'Paijo'}!
           </h1>
           <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-6">
             Pusat kendali aktivitas mengajar sejarah Anda. Siapkan materi multimedia, kelola kelas bimbingan, catat kehadiran siswa, dan pantau nilai secara terpusat dalam satu ruangan kerja digital yang modern.
