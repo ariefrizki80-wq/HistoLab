@@ -43,7 +43,15 @@ export default function KelasView({
 
   // Modals / Input states
   const [isNewClassModalOpen, setIsNewClassModalOpen] = useState(false);
-  const [newClassData, setNewClassData] = useState({ name: '', subject: '', grade: 'X' });
+  const [newClassData, setNewClassData] = useState({
+    name: '',
+    subject: '',
+    grade: 'X',
+    scheduleDay: 'Senin',
+    scheduleTimeStart: '07:30',
+    scheduleTimeEnd: '09:00',
+    teachingHours: 3
+  });
 
   // Student CRUD states
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
@@ -80,10 +88,22 @@ export default function KelasView({
     onAddClass({
       name: newClassData.name,
       subject: newClassData.subject,
-      grade: newClassData.grade
+      grade: newClassData.grade,
+      scheduleDay: newClassData.scheduleDay,
+      scheduleTimeStart: newClassData.scheduleTimeStart,
+      scheduleTimeEnd: newClassData.scheduleTimeEnd,
+      teachingHours: Number(newClassData.teachingHours) || 2
     });
     setIsNewClassModalOpen(false);
-    setNewClassData({ name: '', subject: '', grade: 'X' });
+    setNewClassData({
+      name: '',
+      subject: '',
+      grade: 'X',
+      scheduleDay: 'Senin',
+      scheduleTimeStart: '07:30',
+      scheduleTimeEnd: '09:00',
+      teachingHours: 3
+    });
   };
 
   // Handle Student Submit (Create/Update)
@@ -787,6 +807,60 @@ export default function KelasView({
                   <option value="XI">Tingkat XI (Sebelas)</option>
                   <option value="XII">Tingkat XII (Duabelas)</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 mb-1.5">Hari Mengajar</label>
+                  <select
+                    value={newClassData.scheduleDay}
+                    onChange={e => setNewClassData({ ...newClassData, scheduleDay: e.target.value })}
+                    className="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    required
+                  >
+                    <option value="Senin">Senin</option>
+                    <option value="Selasa">Selasa</option>
+                    <option value="Rabu">Rabu</option>
+                    <option value="Kamis">Kamis</option>
+                    <option value="Jumat">Jumat</option>
+                    <option value="Sabtu">Sabtu</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 mb-1.5">Jam Pelajaran (JP/Minggu)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={newClassData.teachingHours}
+                    onChange={e => setNewClassData({ ...newClassData, teachingHours: Number(e.target.value) })}
+                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 mb-1.5">Jam Mulai</label>
+                  <input
+                    type="time"
+                    value={newClassData.scheduleTimeStart}
+                    onChange={e => setNewClassData({ ...newClassData, scheduleTimeStart: e.target.value })}
+                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 mb-1.5">Jam Selesai</label>
+                  <input
+                    type="time"
+                    value={newClassData.scheduleTimeEnd}
+                    onChange={e => setNewClassData({ ...newClassData, scheduleTimeEnd: e.target.value })}
+                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">

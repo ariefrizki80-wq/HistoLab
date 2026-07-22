@@ -6,6 +6,10 @@ export const INITIAL_CLASSES: ClassItem[] = [
     name: 'Kelas X - A',
     subject: 'Sejarah Indonesia',
     grade: 'X',
+    scheduleDay: 'Rabu',
+    scheduleTimeStart: '07:30',
+    scheduleTimeEnd: '09:00',
+    teachingHours: 3,
     students: [
       { id: 'std-1', nis: '26001', name: 'Ahmad Fauzi', notes: 'Sangat aktif dalam diskusi kelas' },
       { id: 'std-2', nis: '26002', name: 'Budi Santoso', notes: 'Tertarik pada sejarah kerajaan Nusantara' },
@@ -71,6 +75,10 @@ export const INITIAL_CLASSES: ClassItem[] = [
     name: 'Kelas XI - IPS 1',
     subject: 'Sejarah Dunia (Peminatan)',
     grade: 'XI',
+    scheduleDay: 'Kamis',
+    scheduleTimeStart: '09:15',
+    scheduleTimeEnd: '10:45',
+    teachingHours: 2,
     students: [
       { id: 'std-201', nis: '25001', name: 'Ade Irma', notes: 'Menyukai topik sejarah revolusi' },
       { id: 'std-202', nis: '25002', name: 'Bambang Pamungkas', notes: 'Fokus olahragawan, perlu didorong dalam materi teoretis' },
@@ -121,6 +129,10 @@ export const INITIAL_CLASSES: ClassItem[] = [
     name: 'Kelas XII - MIPA 3',
     subject: 'Sejarah Indonesia Kontemporer',
     grade: 'XII',
+    scheduleDay: 'Rabu',
+    scheduleTimeStart: '10:00',
+    scheduleTimeEnd: '11:30',
+    teachingHours: 3,
     students: [
       { id: 'std-301', nis: '24001', name: 'Agus Salim', notes: 'Sangat berminat pada diplomasi awal RI' },
       { id: 'std-302', nis: '24002', name: 'Chairil Anwar', notes: 'Kemampuan menulis narasi sejarah sangat puitis' },

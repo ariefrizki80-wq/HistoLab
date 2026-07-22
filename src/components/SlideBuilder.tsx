@@ -16,8 +16,11 @@ import MapFocusMode from './MapFocusMode';
 import { SlideRenderer } from './SlideRenderer';
 import { INITIAL_PRESENTATIONS, PRESENTATION_TEMPLATES } from '../data/initialPresentations';
 import AssetPickerModal from './AssetPickerModal';
+import { useAI } from '../context/AIContext';
 
 export default function SlideBuilder() {
+  const { setAppContext } = useAI();
+
   // Global presentations state
   const [presentations, setPresentations] = useState<PresType[]>([]);
   const [activePresId, setActivePresId] = useState<string | null>(null);
@@ -52,6 +55,13 @@ export default function SlideBuilder() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isUndoingOrRedoing, setIsUndoingOrRedoing] = useState(false);
+
+  useEffect(() => {
+    setAppContext((prev) => ({ ...prev, isPresentationActive: isPresenting }));
+    return () => {
+      setAppContext((prev) => ({ ...prev, isPresentationActive: false }));
+    };
+  }, [isPresenting, setAppContext]);
 
   // Quick modals for adding/editing presentation's self-contained Map / Timeline nodes
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -2238,7 +2248,7 @@ export default function SlideBuilder() {
         category={assetPickerTarget === 'slide_bg' ? 'background' : 'materi'}
         onSelectAsset={(asset) => {
           if (assetPickerTarget === 'slide_bg') {
-            handleUpdateSceneMeta({ backgroundValue: asset.dataUrl });
+            handleUpdateSceneMeta({ backgroundValue: asset.dataUrl, backgroundType: 'image' });
           } else if (assetPickerTarget === 'media_element' && selectedMediaItemId) {
             handleUpdateMediaItem(selectedMediaItemId, { content: asset.dataUrl });
           }

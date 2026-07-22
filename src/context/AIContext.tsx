@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Material, ClassItem, StoryScene, HistoricalMap } from '../types';
+import { Material, ClassItem, StoryScene, HistoricalMap, ClassroomSessionState, ExplanationLevel, HighlightTarget } from '../types';
 import { Asset, getAllAssets } from '../lib/assetLibrary';
 import { getAIMemory, saveAIMemoryNote, updateConversationSummary } from '../lib/memoryManager';
 
@@ -28,6 +28,16 @@ interface AIContextType {
   appContext: AppContextPayload;
   setAppContext: React.Dispatch<React.SetStateAction<AppContextPayload>>;
   
+  // Classroom Session State
+  classroomSession: ClassroomSessionState;
+  startClassroomSession: (overrideOptions?: Partial<ClassroomSessionState>) => void;
+  endClassroomSession: () => void;
+  setExplanationLevel: (level: ExplanationLevel) => void;
+  toggleTeacherMode: () => void;
+  setHighlight: (target: HighlightTarget | null) => void;
+  clearHighlight: () => void;
+  setTeacherInsights: (insights: ClassroomSessionState['teacherInsights']) => void;
+
   // Chat State
   messages: ChatMessage[];
   isChatSending: boolean;
@@ -57,11 +67,19 @@ export function AIProvider({ children }: { children: ReactNode }) {
     activeView: 'dashboard',
   });
 
+  const [classroomSession, setClassroomSession] = useState<ClassroomSessionState>({
+    isActive: false,
+    explanationLevel: 'normal',
+    isTeacherMode: false,
+    activeHighlight: null,
+    teacherInsights: null,
+  });
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-msg',
       role: 'assistant',
-      content: 'Halo Bapak/Ibu Guru! Saya HistoLab AI Assistant. Ada materi, slide presentasi, peta sejarah, atau kuis yang ingin disiapkan hari ini?',
+      content: 'Halo Bapak/Ibu Guru! Saya HistoLab AI Classroom Assistant. Siap mendampingi pembelajaran kelas hari ini.',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -86,6 +104,79 @@ export function AIProvider({ children }: { children: ReactNode }) {
   const registerToolHandler = (handler: (name: string, args: any) => void) => {
     toolHandlerRef.current = handler;
   };
+
+  // Classroom Session Controls
+  const startClassroomSession = (overrideOptions?: Partial<ClassroomSessionState>) => {
+    const now = new Date().toISOString();
+    setClassroomSession((prev) => ({
+      isActive: true,
+      startTime: now,
+      classId: appContext.activeClass?.id,
+      className: appContext.activeClass?.name || 'Kelas Sejarah',
+      subject: appContext.activeClass?.subject || 'Sejarah Indonesia',
+      bab: appContext.activeMaterial?.bab,
+      materialId: appContext.activeMaterial?.id,
+      materialTitle: appContext.activeMaterial?.title,
+      slideIndex: appContext.activeSlideIndex || 0,
+      slideTitle: appContext.activeSlide?.title,
+      explanationLevel: prev.explanationLevel || 'normal',
+      isTeacherMode: prev.isTeacherMode || false,
+      activeHighlight: null,
+      teacherInsights: null,
+      ...overrideOptions,
+    }));
+
+    // Reset session chat history for clean session memory
+    setMessages([
+      {
+        id: `sess-start-${Date.now()}`,
+        role: 'assistant',
+        content: `Sesi AI Classroom Assistant Aktif. Topik: ${appContext.activeMaterial ? `BAB ${appContext.activeMaterial.bab}: ${appContext.activeMaterial.title}` : 'Sejarah Indonesia'}. Silakan buka pertanyaan atau diskusi kelas.`,
+        timestamp: now,
+      },
+    ]);
+  };
+
+  const endClassroomSession = () => {
+    setClassroomSession((prev) => ({
+      ...prev,
+      isActive: false,
+      startTime: null,
+      activeHighlight: null,
+      teacherInsights: null,
+    }));
+    
+    // Clear session memory
+    setMessages([
+      {
+        id: `sess-end-${Date.now()}`,
+        role: 'assistant',
+        content: 'Sesi pembelajaran diakhiri. Memori sesi telah dibersihkan.',
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+  };
+
+  const setExplanationLevel = (level: ExplanationLevel) => {
+    setClassroomSession((prev) => ({ ...prev, explanationLevel: level }));
+  };
+
+  const toggleTeacherMode = () => {
+    setClassroomSession((prev) => ({ ...prev, isTeacherMode: !prev.isTeacherMode }));
+  };
+
+  const setHighlight = (target: HighlightTarget | null) => {
+    setClassroomSession((prev) => ({ ...prev, activeHighlight: target }));
+  };
+
+  const clearHighlight = () => {
+    setClassroomSession((prev) => ({ ...prev, activeHighlight: null }));
+  };
+
+  const setTeacherInsights = (insights: ClassroomSessionState['teacherInsights']) => {
+    setClassroomSession((prev) => ({ ...prev, teacherInsights: insights }));
+  };
+
 
   const sendMessage = async (prompt: string): Promise<string> => {
     if (!prompt.trim()) return '';
@@ -180,6 +271,14 @@ export function AIProvider({ children }: { children: ReactNode }) {
       value={{
         appContext,
         setAppContext,
+        classroomSession,
+        startClassroomSession,
+        endClassroomSession,
+        setExplanationLevel,
+        toggleTeacherMode,
+        setHighlight,
+        clearHighlight,
+        setTeacherInsights,
         messages,
         isChatSending,
         sendMessage,

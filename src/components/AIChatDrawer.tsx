@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, X, Send, Mic, RefreshCw, Trash2, Monitor, Image as ImageIcon, Layers, Folder, CheckCircle } from 'lucide-react';
+import { Sparkles, X, Send, Mic, RefreshCw, Trash2, Monitor, Folder, CheckCircle, GraduationCap, Play, Square, Eye, Sliders } from 'lucide-react';
 import { useAI } from '../context/AIContext';
+import { ExplanationLevel } from '../types';
 
 interface AIChatDrawerProps {
   isOpen: boolean;
@@ -17,6 +18,11 @@ export default function AIChatDrawer({ isOpen, onClose, onOpenAssetPicker }: AIC
     clearChatHistory,
     setIsVoiceOverlayOpen,
     assets,
+    classroomSession,
+    startClassroomSession,
+    endClassroomSession,
+    setExplanationLevel,
+    toggleTeacherMode,
   } = useAI();
 
   const [inputPrompt, setInputPrompt] = useState<string>('');
@@ -44,11 +50,11 @@ export default function AIChatDrawer({ isOpen, onClose, onOpenAssetPicker }: AIC
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
-            <Sparkles size={20} />
+            <GraduationCap size={20} />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">HistoLab AI Assistant</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Context-Aware Gemini Gateway</p>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">AI Classroom Assistant</h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Asisten Pembelajaran Sejarah Interaktif</p>
           </div>
         </div>
 
@@ -76,6 +82,58 @@ export default function AIChatDrawer({ isOpen, onClose, onOpenAssetPicker }: AIC
           >
             <X size={18} />
           </button>
+        </div>
+      </div>
+
+      {/* Classroom Session Control Strip */}
+      <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2">
+          {classroomSession.isActive ? (
+            <button
+              onClick={endClassroomSession}
+              className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 text-[11px] font-medium flex items-center gap-1"
+            >
+              <Square size={10} fill="currentColor" /> Sesi Kelas Aktif
+            </button>
+          ) : (
+            <button
+              onClick={() => startClassroomSession()}
+              className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 text-[11px] font-semibold flex items-center gap-1 hover:bg-amber-400"
+            >
+              <Play size={10} fill="currentColor" /> Mulai Sesi Kelas
+            </button>
+          )}
+
+          <button
+            onClick={toggleTeacherMode}
+            className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium flex items-center gap-1 ${
+              classroomSession.isTeacherMode
+                ? 'bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-500/40'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            <Eye size={12} /> Mode Guru
+          </button>
+        </div>
+
+        {/* Level Penjelasan Selector */}
+        <div className="flex items-center gap-1 text-[11px]">
+          <Sliders size={11} className="text-slate-400" />
+          <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5">
+            {(['singkat', 'normal', 'mendalam'] as ExplanationLevel[]).map((lvl) => (
+              <button
+                key={lvl}
+                onClick={() => setExplanationLevel(lvl)}
+                className={`px-1.5 py-0.5 rounded text-[10px] capitalize font-medium ${
+                  classroomSession.explanationLevel === lvl
+                    ? 'bg-amber-500 text-white dark:text-slate-950 font-bold'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                {lvl}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

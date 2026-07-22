@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppContextPayload, OrbState } from '../context/AIContext';
+import { ClassroomSessionState } from '../types';
 import { getAIMemory } from '../lib/memoryManager';
 
 function floatTo16BitPCM(input: Float32Array): ArrayBuffer {
@@ -37,10 +38,11 @@ function base64ToPCMFloat32(base64: string): Float32Array {
 interface UseGeminiLiveOptions {
   isOpen: boolean;
   appContext: AppContextPayload;
+  classroomSession?: ClassroomSessionState;
   onToolCall?: (name: string, args: any) => void;
 }
 
-export function useGeminiLive({ isOpen, appContext, onToolCall }: UseGeminiLiveOptions) {
+export function useGeminiLive({ isOpen, appContext, classroomSession, onToolCall }: UseGeminiLiveOptions) {
   const [orbState, setOrbState] = useState<OrbState>('idle');
   const [micVolume, setMicVolume] = useState<number>(0);
   const [userTranscript, setUserTranscript] = useState<string>('');
@@ -58,6 +60,22 @@ export function useGeminiLive({ isOpen, appContext, onToolCall }: UseGeminiLiveO
   const nextStartTimeRef = useRef<number>(0);
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const isSpeakingRef = useRef<boolean>(false);
+
+  const appContextRef = useRef(appContext);
+  const classroomSessionRef = useRef(classroomSession);
+  const onToolCallRef = useRef(onToolCall);
+
+  useEffect(() => {
+    appContextRef.current = appContext;
+  }, [appContext]);
+
+  useEffect(() => {
+    classroomSessionRef.current = classroomSession;
+  }, [classroomSession]);
+
+  useEffect(() => {
+    onToolCallRef.current = onToolCall;
+  }, [onToolCall]);
 
   // Stop current audio output (interruption)
   const stopAudioOutput = useCallback(() => {
@@ -210,17 +228,6 @@ export function useGeminiLive({ isOpen, appContext, onToolCall }: UseGeminiLiveO
     }
   }, [isMicActive, stopMicrophone, startMicrophone]);
 
-  const appContextRef = useRef(appContext);
-  const onToolCallRef = useRef(onToolCall);
-
-  useEffect(() => {
-    appContextRef.current = appContext;
-  }, [appContext]);
-
-  useEffect(() => {
-    onToolCallRef.current = onToolCall;
-  }, [onToolCall]);
-
   // Connect WebSocket to /api/ai/live
   useEffect(() => {
     if (!isOpen) {
@@ -248,11 +255,16 @@ export function useGeminiLive({ isOpen, appContext, onToolCall }: UseGeminiLiveO
       console.log('Gemini Live WS connected');
       setIsConnected(true);
       setOrbState('idle');
-      // Send initialization message with Context & Memory
+      // Send initialization message with Context & Memory & Classroom Session
       ws.send(
         JSON.stringify({
           type: 'init',
-          appContext: appContextRef.current,
+          appContext: {
+            ...appContextRef.current,
+            explanationLevel: classroomSessionRef.current?.explanationLevel || 'normal',
+            isTeacherMode: classroomSessionRef.current?.isTeacherMode || false,
+          },
+          classroomSession: classroomSessionRef.current,
           userMemory: getAIMemory(),
         })
       );

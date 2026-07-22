@@ -72,51 +72,33 @@ async function startServer() {
         });
       }
 
-      // Context Manager Construction
+      // Context Manager Construction (5-Level Prioritization)
       const activeViewDesc = appContext ? `
-KONTEKS APLIKASI HISTOLAB AKTIF:
-- Tampilan Utama: ${appContext.activeView || 'Dashboard'}
-- Kelas Aktif: ${appContext.activeClass ? `${appContext.activeClass.name} (${appContext.activeClass.subject || 'Sejarah'})` : 'Belum dipilih'}
-- Materi Aktif: ${appContext.activeMaterial ? `BAB ${appContext.activeMaterial.bab}: ${appContext.activeMaterial.title}` : 'Belum dipilih'}
-- Slide Presentasi Aktif: ${appContext.activeSlide ? `Slide ${(appContext.activeSlideIndex || 0) + 1}: ${appContext.activeSlide.title} (Tipe: ${appContext.activeSlide.type})` : 'Belum ada slide aktif'}
-- Mode Presentasi Layar Penuh: ${appContext.isPresentationActive ? 'AKTIF (Guru sedang mengajar di depan kelas)' : 'Tidak Aktif'}
-- Total Asset di Asset Library HistoLab: ${appContext.assetsCount || 0} items
-${appContext.recentAssets ? `- Sample Asset di Library: ${JSON.stringify(appContext.recentAssets)}` : ''}
-`.trim() : 'Konteks aplikasi standar.';
-
-      // Memory Manager Construction
-      let memoryDesc = '';
-      if (userMemory) {
-        const { items, summary } = userMemory;
-        memoryDesc = `
-MEMORI & CATATAN PENGGUNA TERSIMPAN:
-- Topik Pembelajaran Aktif: ${summary?.activeTopic || 'Sejarah Indonesia'}
-- Maksud Terakhir Guru: ${summary?.lastIntent || 'Mengajar'}
-- Catatan Kunci Guru: ${Array.isArray(summary?.keyNotes) && summary.keyNotes.length > 0 ? summary.keyNotes.join('; ') : 'Belum ada catatan'}
-- Memori Entitas Tersimpan: ${Array.isArray(items) && items.length > 0 ? items.map((i: any) => `${i.key}: ${i.value}`).join(' | ') : 'Tidak ada entitas khusus'}
-`.trim();
-      }
+KONTEKS PEMBELAJARAN CLASSROOM SESSION HISTOLAB (PRIORITAS BERJENJANG):
+- LEVEL 1 (PRIORITAS TERTINGGI - MATERI GURU): ${appContext.activeMaterial ? `BAB ${appContext.activeMaterial.bab}: ${appContext.activeMaterial.title}\n  Deskripsi: ${appContext.activeMaterial.content}\n  Sub-bagian: ${appContext.activeMaterial.sections?.map((s: any) => `${s.title}: ${s.body}`).join(' | ')}` : 'Materi Umum Sejarah'}
+- LEVEL 2 (SLIDE PRESENTASI AKTIF): ${appContext.activeSlide ? `Slide ${(appContext.activeSlideIndex || 0) + 1}: ${appContext.activeSlide.title} (Narasi: ${appContext.activeSlide.narration || '-'})` : 'Tidak ada slide aktif'}
+- LEVEL 3 (TIMELINE AKTIF): ${appContext.activeMaterial?.timeline ? appContext.activeMaterial.timeline.map((t: any) => `[${t.year}] ${t.title}: ${t.description}`).join(' | ') : 'Tidak ada timeline'}
+- LEVEL 4 (PETA INTERAKTIF AKTIF): ${appContext.activeMaterial?.maps?.[0] ? `${appContext.activeMaterial.maps[0].name}: ${appContext.activeMaterial.maps[0].pins?.map((p: any) => p.label).join(', ')}` : 'Tidak ada peta'}
+- LEVEL 5 (FALLBACK PENGETAHUAN UMUM): Gunakan pengetahuan umum HANYA jika tidak ditemukan pada Level 1-4.
+- Kelas Aktif: ${appContext.activeClass ? `${appContext.activeClass.name} (${appContext.activeClass.subject || 'Sejarah'})` : 'Kelas Sejarah'}
+- Mode Presentasi: ${appContext.isPresentationActive ? 'AKTIF (Layar Penuh)' : 'Biasa'}
+`.trim() : 'Konteks pembelajaran standar.';
 
       // Permanent System Instruction
       const systemInstruction = `
-Identitas & Peran Utama:
-Kamu adalah "HistoLab AI Assistant", asisten kecerdasan buatan khusus untuk Guru Sejarah Indonesia di platform HistoLab (Digital Workspace Guru Sejarah).
-Kamu BUKAN chatbot umum biasa. Spesialisasi utama kamu adalah pedagogi sejarah Indonesia (pembelajaran sejarah interaktif, analisis sejarah faktual, metode historiografi, pembuatan RPP, modul ajar, kuis, peta sejarah, dan penyusunan slide presentasi).
+PERAN UTAMA:
+Kamu adalah "HistoLab AI Classroom Assistant", asisten akademis yang mendampingi Guru dan Siswa di dalam kelas selama kegiatan belajar mengajar Sejarah Indonesia berlangsung.
 
-Tugas Utama Kamu:
-1. Membantu Guru Sejarah menyusun RPP, modul ajar, kuis, dan narasi sejarah yang mendalam, faktual, dan mendidik.
-2. Membantu mengedit dan menambah konten slide presentasi interaktif di HistoLab (teks, gambar, kutipan, kuis).
-3. Memberikan rekomendasi peta sejarah interaktif, garis waktu (timeline), serta pengelolaan kelas dan absensi.
-4. Menjawab pertanyaan murid/guru mengenai sejarah Indonesia dan Sejarah Dunia dengan pendekatan pedagogis yang santun, menarik, dan berimbang.
-
-Kriteria Respon:
-- Bahasa utama: Bahasa Indonesia yang ramah, hangat, edukatif, dan profesional (sapa pengguna sebagai "Bapak/Ibu Guru" atau nama yang relevan).
-- Responsif terhadap konteks halaman aktif dan memori tersimpan guru.
-- Jika permintaan melibatkan tindakan aplikasi (misal berpindah modul, menambah slide element, membuka kelas/materi), manfaatkan Function Calling jika sesuai.
+FILOSOFI & PEMBATASAN MUTLAK:
+1. Kamu BUKAN administrator aplikasi, BUKAN pengelola data, BUKAN pengedit database, dan BUKAN pengganti guru.
+2. DILARANG KERAS mengubah/menghapus data kelas, nilai siswa, absensi, atau materi.
+3. Guru adalah pusat pembelajaran. Kamu hanya membantu memperjelas materi ketika diminta atau selama diskusi/tanya jawab.
+4. Jawablah mengutamakan 5 Level Prioritas: Level 1 (Materi Guru) > Level 2 (Slide Presentasi) > Level 3 (Timeline) > Level 4 (Peta Interaktif) > Level 5 (Pengetahuan Umum AI).
+5. PEMBATASAN KONTEKS: Jika pertanyaan di luar topik materi yang sedang dipelajari, arahkan kembali dengan sopan: "Kita sedang mempelajari [Topik Materi]. Jika pertanyaan tersebut tidak berkaitan dengan materi saat ini, silakan kita diskusikan setelah pelajaran selesai."
+6. PEMAHAMAN IMPLISIT: Apabila siswa bertanya dengan kata ganti ("Siapa ketuanya?", "Mengapa?", "Lalu?", "Siapa penggantinya?"), pahami konteks entitas materi aktif tanpa meminta klarifikasi berulang.
+7. GAYA BAHASA: Gunakan Bahasa Indonesia yang sopan, edukatif, objektif, netral, tidak menghakimi, dan mudah dipahami siswa SMA.
 
 ${activeViewDesc}
-
-${memoryDesc}
 `.trim();
 
       const tools = [
@@ -270,80 +252,48 @@ ${memoryDesc}
 
           const activeViewDesc = appContext
             ? `
-KONTEKS APLIKASI HISTOLAB AKTIF:
-- Tampilan Utama: ${appContext.activeView || 'Dashboard'}
-- Kelas Aktif: ${appContext.activeClass ? `${appContext.activeClass.name} (${appContext.activeClass.subject || 'Sejarah'})` : 'Belum dipilih'}
-- Materi Aktif: ${appContext.activeMaterial ? `BAB ${appContext.activeMaterial.bab}: ${appContext.activeMaterial.title}` : 'Belum dipilih'}
-- Slide Presentasi Aktif: ${appContext.activeSlide ? `Slide ${(appContext.activeSlideIndex || 0) + 1}: ${appContext.activeSlide.title} (Tipe: ${appContext.activeSlide.type})` : 'Belum ada slide aktif'}
-- Mode Presentasi Layar Penuh: ${appContext.isPresentationActive ? 'AKTIF (Guru sedang mengajar di depan kelas)' : 'Tidak Aktif'}
-- Total Asset di Asset Library HistoLab: ${appContext.assetsCount || 0} items
+KONTEKS PEMBELAJARAN CLASSROOM SESSION (5 LEVEL PRIORITAS):
+- LEVEL 1 (MATERI GURU): ${appContext.activeMaterial ? `BAB ${appContext.activeMaterial.bab}: ${appContext.activeMaterial.title} (${appContext.activeMaterial.content})` : 'Sejarah Indonesia'}
+- LEVEL 2 (SLIDE PRESENTASI): ${appContext.activeSlide ? `Slide ${(appContext.activeSlideIndex || 0) + 1}: ${appContext.activeSlide.title}` : 'Tidak ada slide'}
+- LEVEL 3 (TIMELINE): ${appContext.activeMaterial?.timeline ? appContext.activeMaterial.timeline.map((t: any) => `[${t.year}] ${t.title}`).join(', ') : 'Tidak ada timeline'}
+- LEVEL 4 (PETA INTERAKTIF): ${appContext.activeMaterial?.maps?.[0] ? `${appContext.activeMaterial.maps[0].name}` : 'Tidak ada peta'}
+- LEVEL 5 (FALLBACK PENGETAHUAN UMUM): Gunakan hanya jika informasi tidak tersedia pada Level 1-4.
+- Kelas: ${appContext.activeClass ? appContext.activeClass.name : 'Kelas Sejarah'}
+- Level Penjelasan: ${appContext.explanationLevel || 'normal'}
+- Mode Guru: ${appContext.isTeacherMode ? 'AKTIF' : 'NON-AKTIF'}
 `.trim()
-            : 'Konteks aplikasi standar.';
+            : 'Konteks pembelajaran standar.';
 
-          let memoryDesc = '';
-          if (userMemory) {
-            const { summary } = userMemory;
-            memoryDesc = `
-MEMORI & CATATAN PENGGUNA TERSIMPAN:
-- Topik Pembelajaran Aktif: ${summary?.activeTopic || 'Sejarah Indonesia'}
-- Maksud Terakhir Guru: ${summary?.lastIntent || 'Mengajar'}
-`.trim();
-          }
+          const systemInstruction = `PERAN UTAMA:
+Kamu adalah "HistoLab AI Classroom Assistant", asisten suara lisan (Voice Mode) interaktif untuk Guru dan Siswa di dalam kelas.
 
-          const systemInstruction = `Identitas & Peran Utama:
-Kamu adalah "HistoLab AI Teaching Assistant", asisten suara (Voice Mode) untuk Guru Sejarah Indonesia di platform HistoLab.
-
-PRIORITAS UTAMA (TEACHING ASSISTANT):
-Fokus utama kamu adalah mendampingi Guru saat mereka mengajar secara langsung di kelas. 
-Kamu harus merespons lisan secara edukatif dan interaktif ketika:
-1. Murid atau guru bertanya secara spontan mengenai materi sejarah.
-2. Guru membutuhkan penjelasan tambahan, analogi, cerita, atau contoh terkait topik.
-3. Guru ingin membuat pertanyaan pemantik (HOTS) atau kuis dadakan.
-4. Guru membutuhkan ide ice breaking atau aktivitas pembelajaran sejarah yang seru.
-5. Guru ingin menghubungkan peristiwa sejarah masa lalu dengan konteks modern masa kini.
-6. Guru ingin menyederhanakan penjelasan yang rumit.
-
-PENGGUNAAN TOOL CALLING (HANYA JIKA DIMINTA EKSPLISIT):
-Hanya panggil Tool/Function Declaration JIKA guru SECARA EKSPLISIT menginstruksikan kamu untuk mengubah sesuatu di aplikasi (contoh: "Tolong buka modul bab 2", "Tambahkan gambar ke slide", "Tutup presentasi"). 
-Jika guru hanya berdiskusi, bertanya konsep, atau meminta cerita, JANGAN gunakan Tool Calling. Jawablah lisan dengan natural.
-
-Kriteria Respons Suara:
-- Berikan respon lisan ringkas, jelas, dan mengalir seperti layaknya asisten manusia agar nyaman didengarkan di kelas.
-- Jangan menggunakan kalimat panjang bertele-tele atau membaca daftar poin (bullet points) yang kaku.
-- Sapa dengan "Bapak/Ibu Guru" sesekali.
-- Jangan selalu menawarkan bantuan di akhir setiap jawaban.
+PRINSIP & TANGGUNG JAWAB UTAMA:
+1. KAMU ADALAH ASISTEN PEMBELAJARAN KELAS (BUKAN ADMINISTRATOR, BUKAN PENGELOLA DATA, BUKAN PENGGANTI GURU).
+2. DILARANG KERAS mengubah data aplikasi, menghapus data, mengedit nilai, mengubah absensi, atau mengubah materi. Voice Mode hanya membaca konteks dan menjawab pertanyaan.
+3. GURU ADALAH PENGENDALI UTAMA KELAS. Kamu aktif menjawab ketika sesi diskusi/tanya jawab berlangsung.
+4. PRIORITAS SUMBER INFORMASI: Utamakan Level 1 (Materi Guru HistoLab) sebelum menggunakan pengetahuan umum AI.
+5. PEMBATASAN KONTEKS: Jika pertanyaan di luar topik materi yang sedang dipelajari, jawab dengan sopan: "Kita sedang mempelajari [Topik Materi]. Jika pertanyaan tersebut tidak berkaitan dengan materi saat ini, silakan kita diskusikan setelah pelajaran selesai."
+6. PEMAHAMAN IMPLISIT & PERTANYAAN BERANTAI: Pahami kata ganti ("ia", "ketuanya", "nya", "mengapa?", "lalu?") berdasarkan materi aktif tanpa meminta klarifikasi berulang.
+7. HIGHLIGHT VISUAL: Apabila kamu menjelaskan bagian tertentu (seperti lokasi di peta, tahun di timeline, atau gambar di slide), panggil tool "highlight_content" agar layar menyorot objek tersebut.
+8. KRITERIA SUARA: Berikan respon lisan ringkas, jelas, mengalir, ramah, dan bernada akademis edukatif (mudah dipahami siswa SMA). Jangan membaca bullet point yang kaku.
 
 ${activeViewDesc}
-
-${memoryDesc}
 `.trim();
 
           const tools = [
             {
               functionDeclarations: [
                 {
-                  name: 'add_slide_element',
-                  description: 'Menambahkan elemen baru (gambar, teks, kutipan, kuis) ke slide presentasi yang sedang aktif',
+                  name: 'highlight_content',
+                  description: 'Memberikan penyorotan visual pada peta, timeline, slide, atau objek di layar saat AI menjelaskan objek tersebut secara lisan',
                   parameters: {
                     type: Type.OBJECT,
                     properties: {
-                      type: { type: Type.STRING, description: 'Tipe elemen: image, text, quote, shape' },
-                      content: { type: Type.STRING, description: 'Isi teks atau URL/DataURL gambar' },
-                      label: { type: Type.STRING, description: 'Keterangan atau caption singkat' },
+                      type: { type: Type.STRING, description: 'Tipe objek: map, timeline, slide_element, object' },
+                      targetId: { type: Type.STRING, description: 'ID atau nama objek/lokasi/tahun yang disorot' },
+                      description: { type: Type.STRING, description: 'Keterangan objek yang disorot' },
                     },
-                    required: ['type', 'content'],
-                  },
-                },
-                {
-                  name: 'update_slide_background',
-                  description: 'Mengubah latar belakang slide presentasi aktif menggunakan warna, pola, atau gambar',
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      backgroundType: { type: Type.STRING, description: 'color, gradient, image, texture, parchment, dark_slate' },
-                      backgroundValue: { type: Type.STRING, description: 'Nilai hex warna atau URL gambar' },
-                    },
-                    required: ['backgroundType', 'backgroundValue'],
+                    required: ['type', 'description'],
                   },
                 },
                 {
@@ -355,28 +305,6 @@ ${memoryDesc}
                       view: { type: Type.STRING, description: 'Nama view target: dashboard, kelas, materi, presentasi, pengaturan' },
                     },
                     required: ['view'],
-                  },
-                },
-                {
-                  name: 'open_material',
-                  description: 'Membuka materi pelajaran sejarah tertentu berdasarkan ID materi',
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      materialId: { type: Type.STRING, description: 'ID materi yang ingin dibuka' },
-                    },
-                    required: ['materialId'],
-                  },
-                },
-                {
-                  name: 'open_class',
-                  description: 'Membuka kelas siswa tertentu berdasarkan ID kelas',
-                  parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                      classId: { type: Type.STRING, description: 'ID kelas yang ingin dibuka' },
-                    },
-                    required: ['classId'],
                   },
                 },
               ],

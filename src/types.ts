@@ -169,6 +169,10 @@ export interface ClassItem {
   name: string; // e.g. "X - IPA 1"
   subject: string; // e.g. "Sejarah Indonesia"
   grade: string; // e.g. "X", "XI", "XII"
+  scheduleDay?: string; // e.g. "Rabu" or "Senin" or "Senin, Rabu"
+  scheduleTimeStart?: string; // e.g. "07:30"
+  scheduleTimeEnd?: string; // e.g. "09:00"
+  teachingHours?: number; // e.g. 3 (jam pelajaran per minggu)
   students: Student[];
   meetings: Meeting[];
   gradeItems: GradeItem[];
@@ -191,4 +195,38 @@ export interface ReminderNote {
   isDone: boolean;
   category: 'lesson_plan' | 'grading' | 'reminder' | 'trivia';
   createdAt: string;
+}
+
+export type ExplanationLevel = 'singkat' | 'normal' | 'mendalam';
+
+export interface HighlightTarget {
+  type: 'map' | 'timeline' | 'slide_element' | 'text' | 'object';
+  targetId?: string;
+  label?: string;
+  description: string;
+}
+
+export interface ClassroomSessionState {
+  isActive: boolean;
+  startTime?: string | null;
+  classId?: string;
+  className?: string;
+  subject?: string;
+  bab?: string;
+  subbab?: string;
+  materialId?: string;
+  materialTitle?: string;
+  slideIndex?: number;
+  slideTitle?: string;
+  explanationLevel: ExplanationLevel;
+  isTeacherMode: boolean;
+  learningObjectives?: string[];
+  keywords?: string[];
+  activeHighlight?: HighlightTarget | null;
+  teacherInsights?: {
+    suggestedQuestions?: string[];
+    misconceptions?: string[];
+    keyPoints?: string[];
+    answerGuide?: string;
+  } | null;
 }

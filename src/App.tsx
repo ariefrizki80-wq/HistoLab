@@ -27,7 +27,7 @@ export default function App() {
   const [currentMateriMode, setCurrentMateriMode] = useState<'view' | 'edit' | 'create'>('view');
 
   // AI Platform Integration
-  const { setAppContext, setIsVoiceOverlayOpen, registerToolHandler } = useAI();
+  const { appContext, setAppContext, setIsVoiceOverlayOpen, registerToolHandler } = useAI();
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isGlobalAssetPickerOpen, setIsGlobalAssetPickerOpen] = useState(false);
 
@@ -56,7 +56,7 @@ export default function App() {
     });
   }, [registerToolHandler, setAppContext]);
   
-  const isPresentationModeActive = false;
+  const isPresentationModeActive = appContext.isPresentationActive || false;
   
   // Mobile responsive state
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1280);
@@ -100,55 +100,63 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Initialize and synchronize with LocalStorage
-  useEffect(() => {
+  // Function to reload all state from localStorage after backup restore
+  const reloadAllDataFromLocalStorage = () => {
     const localClasses = localStorage.getItem('histolab_classes_v1');
     const localMaterials = localStorage.getItem('histolab_materials_v1');
     const localEvents = localStorage.getItem('histolab_events_v1');
     const localReminders = localStorage.getItem('histolab_reminders_v1');
 
     if (localClasses) {
-      setClasses(JSON.parse(localClasses));
+      try {
+        setClasses(JSON.parse(localClasses));
+      } catch (e) {
+        setClasses(INITIAL_CLASSES);
+      }
     } else {
       setClasses(INITIAL_CLASSES);
       localStorage.setItem('histolab_classes_v1', JSON.stringify(INITIAL_CLASSES));
     }
 
     if (localMaterials) {
-      const parsed = JSON.parse(localMaterials);
-      let needsMigration = false;
-      const migrated = parsed.map((m: any) => {
-        const initialMatch = INITIAL_MATERIALS.find(im => im.id === m.id);
-        if (initialMatch && initialMatch.maps) {
-          const updatedMaps = m.maps?.map((mapItem: any) => {
-            const initialMapMatch = initialMatch.maps?.find(imMap => imMap.id === mapItem.id);
-            if (initialMapMatch) {
-              const missingPins = !mapItem.pins || mapItem.pins.length === 0;
-              const hasInitialPins = initialMapMatch.pins && initialMapMatch.pins.length > 0;
-              if (missingPins && hasInitialPins) {
-                needsMigration = true;
-                return {
-                  ...mapItem,
-                  pins: initialMapMatch.pins,
-                  mapStyle: mapItem.mapStyle || initialMapMatch.mapStyle || 'maritime',
-                  showRoute: mapItem.showRoute !== undefined ? mapItem.showRoute : (initialMapMatch.showRoute !== undefined ? initialMapMatch.showRoute : true)
-                };
+      try {
+        const parsed = JSON.parse(localMaterials);
+        let needsMigration = false;
+        const migrated = parsed.map((m: any) => {
+          const initialMatch = INITIAL_MATERIALS.find(im => im.id === m.id);
+          if (initialMatch && initialMatch.maps) {
+            const updatedMaps = m.maps?.map((mapItem: any) => {
+              const initialMapMatch = initialMatch.maps?.find(imMap => imMap.id === mapItem.id);
+              if (initialMapMatch) {
+                const missingPins = !mapItem.pins || mapItem.pins.length === 0;
+                const hasInitialPins = initialMapMatch.pins && initialMapMatch.pins.length > 0;
+                if (missingPins && hasInitialPins) {
+                  needsMigration = true;
+                  return {
+                    ...mapItem,
+                    pins: initialMapMatch.pins,
+                    mapStyle: mapItem.mapStyle || initialMapMatch.mapStyle || 'maritime',
+                    showRoute: mapItem.showRoute !== undefined ? mapItem.showRoute : (initialMapMatch.showRoute !== undefined ? initialMapMatch.showRoute : true)
+                  };
+                }
               }
+              return mapItem;
+            });
+            if (updatedMaps) {
+              return { ...m, maps: updatedMaps };
             }
-            return mapItem;
-          });
-          if (updatedMaps) {
-            return { ...m, maps: updatedMaps };
           }
-        }
-        return m;
-      });
+          return m;
+        });
 
-      if (needsMigration) {
-        setMaterials(migrated);
-        localStorage.setItem('histolab_materials_v1', JSON.stringify(migrated));
-      } else {
-        setMaterials(parsed);
+        if (needsMigration) {
+          setMaterials(migrated);
+          localStorage.setItem('histolab_materials_v1', JSON.stringify(migrated));
+        } else {
+          setMaterials(parsed);
+        }
+      } catch (e) {
+        setMaterials(INITIAL_MATERIALS);
       }
     } else {
       setMaterials(INITIAL_MATERIALS);
@@ -156,18 +164,33 @@ export default function App() {
     }
 
     if (localEvents) {
-      setEvents(JSON.parse(localEvents));
+      try {
+        setEvents(JSON.parse(localEvents));
+      } catch (e) {
+        setEvents(INITIAL_CALENDAR_EVENTS);
+      }
     } else {
       setEvents(INITIAL_CALENDAR_EVENTS);
       localStorage.setItem('histolab_events_v1', JSON.stringify(INITIAL_CALENDAR_EVENTS));
     }
 
     if (localReminders) {
-      setReminders(JSON.parse(localReminders));
+      try {
+        setReminders(JSON.parse(localReminders));
+      } catch (e) {
+        setReminders(INITIAL_REMINDERS);
+      }
     } else {
       setReminders(INITIAL_REMINDERS);
       localStorage.setItem('histolab_reminders_v1', JSON.stringify(INITIAL_REMINDERS));
     }
+  };
+
+  // Initialize and synchronize with LocalStorage
+  useEffect(() => {
+    reloadAllDataFromLocalStorage();
+    window.addEventListener('histolab_data_restored', reloadAllDataFromLocalStorage);
+    return () => window.removeEventListener('histolab_data_restored', reloadAllDataFromLocalStorage);
   }, []);
 
   // Helper to persist state to LocalStorage on updates
@@ -712,24 +735,22 @@ export default function App() {
                 <SlideBuilder />
               )}
               {activeView === 'pengaturan' && (
-                <SettingsView />
+                <SettingsView onRestoreData={reloadAllDataFromLocalStorage} />
               )}
             </div>
          </main>
       </div>
 
       {/* Floating AI Assistant Trigger (Bottom Right) */}
-      {!isPresentationModeActive && (
-        <div className="fixed bottom-6 right-6 z-[9000] flex flex-col items-end gap-3">
-          <button
-            onClick={() => setIsChatDrawerOpen(true)}
-            className="p-4 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 text-slate-950 shadow-2xl hover:scale-105 transition-all flex items-center justify-center group ring-4 ring-amber-500/20"
-            title="Buka AI Assistant HistoLab"
-          >
-            <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
-          </button>
-        </div>
-      )}
+      <div className={`fixed z-[9000] flex flex-col items-end gap-3 transition-all duration-300 ${isPresentationModeActive ? 'bottom-24 right-6 scale-75 opacity-70 hover:opacity-100 hover:scale-90' : 'bottom-6 right-6'}`}>
+        <button
+          onClick={() => setIsChatDrawerOpen(true)}
+          className="p-4 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 text-slate-950 shadow-2xl hover:scale-105 transition-all flex items-center justify-center group ring-4 ring-amber-500/20"
+          title="Buka AI Assistant HistoLab"
+        >
+          <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
+        </button>
+      </div>
 
       {/* AI Modals & Drawers */}
       <AIChatDrawer
